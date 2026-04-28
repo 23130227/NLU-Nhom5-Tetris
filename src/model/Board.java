@@ -7,6 +7,12 @@ public class Board {
     private int width;
     private int height;
 
+    public Board() {
+        // Khởi tạo mảng 2 chiều 20 hàng, 10 cột
+        height = 20;
+        width = 10;
+        grid = new int[height][width];
+    }
     public boolean isValidMove(Tetromino p, int x, int y) {
         return false;
     }
@@ -24,6 +30,6 @@ public class Board {
     }
 
     public int[][] getGrid() {
-        return null;
+        return grid;
     }
 }

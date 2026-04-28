@@ -8,6 +8,14 @@ public class Tetromino {
     private int x, y;
     private Color color;
 
+    public Tetromino(TetrominoType type) {
+        this.matrix = type.matrix;
+        this.color = type.color;
+        // Vị trí mặc định: Giữa phía trên board
+        this.x = 3;
+        this.y = 0;
+    }
+
     public void move(int dx, int dy) {
 
     }
@@ -21,10 +29,13 @@ public class Tetromino {
     }
 
     public int[][] getMatrix() {
-        return null;
+        return matrix;
     }
 
     public Color getColor() {
-        return null;
+        return color;
     }
+
+    public int getX() { return x; }
+    public int getY() { return y; }
 }
