@@ -1,5 +1,6 @@
 package model;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class Board {
@@ -16,14 +17,45 @@ public class Board {
     }
 
     public List<Integer> scanFullLines() {
-        return null;
+        List<Integer> fullLines = new ArrayList<>();
+        for (int y = height - 1; y >= 0; y--) {
+            boolean isFull = true;
+            for (int x = 0; x < width; x++) {
+                if (grid[y][x] == 0) {
+                    isFull = false;
+                    break;
+                }
+            }
+            if (isFull) {
+                fullLines.add(y);
+            }
+        }
+
+        return fullLines;
     }
 
     public void clearAndShift(List<Integer> lines) {
+        if (lines == null || lines.isEmpty()) return;
+        int shiftDown = 0;
+        for (int y = height - 1; y >= 0; y--){
+            if (lines.contains(y)) {
+                shiftDown++;
+            } else if (shiftDown > 0) {
+                for (int x = 0; x < width; x++) {
+                    grid[y + shiftDown][x] = grid[y][x]; // Dòng trên đè xuống dòng dưới
+                }
+            }
+        }
 
+
+        for (int y = 0; y < shiftDown; y++) {
+            for (int x = 0; x < width; x++) {
+                grid[y][x] = 0;
+            }
+        }
     }
 
     public int[][] getGrid() {
-        return null;
+        return grid;
     }
 }
