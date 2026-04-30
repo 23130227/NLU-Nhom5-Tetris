@@ -15,40 +15,60 @@ public class GameGUI {
     public GameGUI(GameModel model) {
         this.model = model;
         this.mainFrame = new JFrame("Tetris");
-//
-//        this.boardPanel = new BoardPanel(model);
-//        this.sidePanel = new SidePanel(model);
-//
-//        mainFrame.setLayout(new BorderLayout());
-//        mainFrame.add(boardPanel, BorderLayout.CENTER);
-//        mainFrame.add(sidePanel, BorderLayout.EAST);
-//
-//        mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-//        mainFrame.setResizable(false);
-//        mainFrame.pack();
-//        mainFrame.setLocationRelativeTo(null);
-//        mainFrame.setVisible(true);
 
         // Panel chứa tiêu đề "Tetris Pro" bên trái
-        JPanel leftPanel = new JPanel() {
+        JPanel leftPanel = new JPanel();
+        leftPanel.setPreferredSize(new Dimension(260, 600));
+        leftPanel.setBackground(Color.BLACK);
+        leftPanel.setLayout(new BorderLayout());
+        JPanel topPanel = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
                 Graphics2D g2 = (Graphics2D) g;
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setColor(Color.WHITE);
-                g2.setFont(new Font("Times New Roman", Font.ITALIC, 45));
-                g2.drawString("Tetris", 20, 80);
 
-                // Trạng thái Power-up (Nếu có logic sau này)
-                g2.setColor(Color.YELLOW);
-                g2.setFont(new Font("SansSerif", Font.BOLD, 22));
-                g2.drawString("Powerup Ready!", 20, 250);
+                // ===== TITLE =====
+                g2.setFont(new Font("Segoe UI", Font.BOLD, 48));
+                g2.setColor(new Color(0, 200, 255)); // xanh neon
+                g2.drawString("TETRIS", 20, 80);
+
+                // Shadow nhẹ
+                g2.setColor(new Color(0, 200, 255, 80));
+                g2.drawString("TETRIS", 22, 82);
+
+                // ===== SUBTITLE =====
+                g2.setFont(new Font("Segoe UI", Font.PLAIN, 16));
+                g2.setColor(Color.LIGHT_GRAY);
+                g2.drawString("Modern Edition", 22, 110);
+
+                // ===== POWERUP =====
+                g2.setFont(new Font("Segoe UI", Font.BOLD, 18));
+                g2.setColor(new Color(255, 200, 0));
+                g2.drawString("POWER-UP", 20, 250);
+
+                g2.setFont(new Font("Segoe UI", Font.PLAIN, 16));
+                g2.setColor(Color.WHITE);
+                g2.drawString("Ready", 20, 280);
             }
         };
-        leftPanel.setPreferredSize(new Dimension(300, 600));
-        leftPanel.setBackground(Color.BLACK);
+        topPanel.setOpaque(false);
+        topPanel.setPreferredSize(new Dimension(260, 300));
 
+        JButton restartBtn = new JButton("RESTART");
+
+        restartBtn.setFocusPainted(false);
+        restartBtn.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        restartBtn.setBackground(new Color(70, 70, 70));
+        restartBtn.setForeground(Color.WHITE);
+        restartBtn.setBorder(BorderFactory.createEmptyBorder(20, 50, 20, 50));
+
+        JPanel bottomPanel = new JPanel();
+        bottomPanel.setOpaque(false);
+        bottomPanel.add(restartBtn);
+
+        leftPanel.add(topPanel, BorderLayout.NORTH);
+        leftPanel.add(bottomPanel, BorderLayout.SOUTH);
         this.boardPanel = new BoardPanel(model);
         this.sidePanel = new SidePanel(model);
 
