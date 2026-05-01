@@ -2,6 +2,7 @@ package controller;
 
 import model.Board;
 import model.GameModel;
+import model.GameState;
 import model.Tetromino;
 import view.GameGUI;
 
@@ -31,6 +32,12 @@ public class GameController {
     }
 
     public void gameLoop() {
+        if (model.getState() == GameState.GAME_OVER) {
+            pauseGame();
+            view.showGameOver();
+            return;
+        }
+
         Tetromino current = model.getCurrentPiece();
         Board board = model.getBoard();
 
@@ -42,7 +49,6 @@ public class GameController {
             java.util.List<Integer> fullLines = board.scanFullLines();
             if (!fullLines.isEmpty()) {
                 board.clearAndShift(fullLines);
-
             }
 
             model.spawnNewPiece();
@@ -102,4 +108,5 @@ public class GameController {
         }
         view.refresh();
     }
+
 }

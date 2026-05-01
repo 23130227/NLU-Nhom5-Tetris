@@ -22,6 +22,9 @@ public class GameModel {
         Random rand = new Random();
         int randomId = rand.nextInt(7);
         this.currentPiece = new Tetromino(randomId);
+        if (!board.isValidMove(currentPiece, currentPiece.getX(), currentPiece.getY())) {
+            setGameOver();
+        }
     }
 
     public void holdCurrentPiece() {
@@ -47,6 +50,9 @@ public class GameModel {
         return  this.board;
     }
 
+    public void setGameOver(){
+        this.state = GameState.GAME_OVER;
+    }
   public static void main(String[] args) {
     GameModel model = new GameModel();
 
