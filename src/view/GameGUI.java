@@ -92,7 +92,7 @@ public class GameGUI {
 
     public void refresh(){
         boardPanel.repaint();
-        sidePanel.repaint();
+//        sidePanel.repaint();
     }
 
     public void showGameOver(){
