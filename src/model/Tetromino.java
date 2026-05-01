@@ -79,7 +79,8 @@ public class Tetromino {
     }
 
     public void move(int dx, int dy) {
-
+        this.x += dx;
+        this.y += dy;
     }
 
     public void rotate() {
