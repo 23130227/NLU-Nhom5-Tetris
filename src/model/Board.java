@@ -1,5 +1,6 @@
 package model;
 
+import java.awt.*;
 import java.util.List;
 
 public class Board {
@@ -14,7 +15,18 @@ public class Board {
     }
 
     public boolean isValidMove(Tetromino p, int x, int y) {
-        return false;
+
+        List<Point> points = p.getCoordinates(x, y);
+
+        for (Point pt : points) {
+            if (pt.x < 0 || pt.x >= width || pt.y >= height) {
+                return false;
+            }
+            if (pt.y >= 0 && grid[pt.y][pt.x] != 0) {
+                return false;
+            }
+        }
+        return true;
     }
 
     public void lockPiece(Tetromino p) {
