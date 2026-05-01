@@ -7,10 +7,10 @@ public class Board {
     private int width;
     private int height;
 
-    public Board(int[][] grid, int width, int height) {
-        this.grid = new int[height][width];
+    public Board() {
         this.width = 10;
         this.height = 20;
+        this.grid = new int[height][width];
     }
 
     public boolean isValidMove(Tetromino p, int x, int y) {
@@ -30,6 +30,6 @@ public class Board {
     }
 
     public int[][] getGrid() {
-        return null;
+        return this.grid;
     }
 }

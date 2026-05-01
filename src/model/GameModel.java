@@ -1,17 +1,27 @@
 package model;
 
+import java.util.Random;
+
 public class GameModel {
     private int score;
     private int level;
     private GameState state;
     private Tetromino currentPiece, nextPiece, holdPiece;
+    private Board board;
+
+    public GameModel() {
+        this.board = new Board();
+        this.state = GameState.PLAYING;
+    }
 
     public void updateScore(int lineCount) {
 
     }
 
     public void spawnNewPiece() {
-
+        Random rand = new Random();
+        int randomId = rand.nextInt(7);
+        this.currentPiece = new Tetromino(randomId);
     }
 
     public void holdCurrentPiece() {
@@ -19,7 +29,7 @@ public class GameModel {
     }
 
     public Tetromino getCurrentPiece() {
-        return null;
+        return this.currentPiece;
     }
 
     public int getScore() {
@@ -31,6 +41,25 @@ public class GameModel {
     }
 
     public GameState getState() {
-        return null;
+        return this.state;
     }
-}
+    public Board getBoard() {
+        return  this.board;
+    }
+
+  public static void main(String[] args) {
+    GameModel model = new GameModel();
+
+    System.out.println("Trạng thái game: " + model.getState());
+    System.out.println("Kích thước Board: " + model.getBoard().getGrid().length + " hàng.");
+
+    model.spawnNewPiece();
+    Tetromino piece = model.getCurrentPiece();
+
+    System.out.println("\nĐã sinh gạch thành công!");
+    System.out.println("Màu gạch: " + piece.getColor());
+    System.out.println("Tọa độ xuất phát:");
+    piece.printCoords();
+}}
+
+
