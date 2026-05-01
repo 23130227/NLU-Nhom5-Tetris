@@ -35,10 +35,16 @@ public class GameController {
         Board board = model.getBoard();
 
         if (board.isValidMove(current, current.getX(), current.getY() + 1)) {
-
             current.move(0, 1);
         } else {
             board.lockPiece(current);
+
+            java.util.List<Integer> fullLines = board.scanFullLines();
+            if (!fullLines.isEmpty()) {
+                board.clearAndShift(fullLines);
+
+            }
+
             model.spawnNewPiece();
             canSoftDrop = false;
         }
