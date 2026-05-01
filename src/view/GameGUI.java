@@ -13,6 +13,7 @@ public class GameGUI {
     private BoardPanel boardPanel;
     private SidePanel sidePanel;
     private GameModel model;
+    private JButton startBtn;
 
     public GameGUI(GameModel model) {
         this.model = model;
@@ -57,7 +58,7 @@ public class GameGUI {
         topPanel.setOpaque(false);
         topPanel.setPreferredSize(new Dimension(260, 300));
 
-        JButton startBtn = new JButton("Bắt đầu");
+        startBtn = new JButton("Bắt đầu");
 
         startBtn.setFocusPainted(false);
         startBtn.setFocusable(false);
@@ -107,4 +108,7 @@ public class GameGUI {
         return mainFrame;
     }
 
+    public JButton getStartBtn() {
+        return startBtn;
+    }
 }

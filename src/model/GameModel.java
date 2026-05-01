@@ -11,7 +11,7 @@ public class GameModel {
 
     public GameModel() {
         this.board = new Board();
-        this.state = GameState.PLAYING;
+        this.state = GameState.MENU;
     }
 
     public void updateScore(int lineCount) {
@@ -52,6 +52,14 @@ public class GameModel {
 
     public void setGameOver(){
         this.state = GameState.GAME_OVER;
+    }
+
+    public void reset() {
+        board.reset();
+        score = 0;
+        level = 1;
+        state = GameState.PLAYING;
+        spawnNewPiece();
     }
   public static void main(String[] args) {
     GameModel model = new GameModel();

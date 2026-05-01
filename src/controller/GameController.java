@@ -62,6 +62,20 @@ public class GameController {
             gameTimer.stop();
         }
     }
+
+    public void startOrResetGame() {
+        if (model.getState() == GameState.GAME_OVER || model.getState() == GameState.MENU) {
+            model.reset();
+            canSoftDrop = true;
+
+            if (gameTimer != null) {
+                gameTimer.stop();
+            }
+
+            startGame();
+            view.refresh();
+        }
+    }
     // --- CÁC HÀM XỬ LÝ PHÍM BẤM ---
 
     public void moveLeft() {
