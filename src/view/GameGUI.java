@@ -58,6 +58,7 @@ public class GameGUI {
         JButton startBtn = new JButton("Bắt đầu");
 
         startBtn.setFocusPainted(false);
+        startBtn.setFocusable(false);
         startBtn.setFont(new Font("Segoe UI", Font.BOLD, 16));
         startBtn.setBackground(new Color(70, 70, 70));
         startBtn.setForeground(Color.WHITE);

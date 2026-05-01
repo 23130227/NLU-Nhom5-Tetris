@@ -13,12 +13,14 @@ public class GameController {
     private Timer gameTimer;
     private GameModel model;
     private GameGUI view;
+    private boolean canSoftDrop = true;
 
-    public GameController(GameModel model, GameGUI view){
+    public GameController(GameModel model, GameGUI view) {
         this.model = model;
         this.view = view;
     }
-    public void startGame(){
+
+    public void startGame() {
         gameTimer = new Timer(500, new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -28,7 +30,7 @@ public class GameController {
         gameTimer.start();
     }
 
-    public void gameLoop(){
+    public void gameLoop() {
         Tetromino current = model.getCurrentPiece();
         Board board = model.getBoard();
 
@@ -38,12 +40,13 @@ public class GameController {
         } else {
             board.lockPiece(current);
             model.spawnNewPiece();
+            canSoftDrop = false;
         }
         view.refresh();
     }
 
-    public void pauseGame(){
-        if(gameTimer != null && gameTimer.isRunning()){
+    public void pauseGame() {
+        if (gameTimer != null && gameTimer.isRunning()) {
             gameTimer.stop();
         }
     }
@@ -69,7 +72,13 @@ public class GameController {
 
     public void moveDown() {
         // Tái sử dụng luôn hàm gameLoop() vì nó đã chứa sẵn logic rơi xuống 1 ô!
-        gameLoop();
+        if (canSoftDrop) {
+            gameLoop();
+        }
+    }
+
+    public void resetSoftDrop() {
+        canSoftDrop = true;
     }
 
     public void rotatePiece() {
