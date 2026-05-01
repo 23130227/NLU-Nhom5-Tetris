@@ -33,7 +33,7 @@ public class Board {
         List<Point> points = p.getCoordinates();
         for (Point pt : points) {
             if (pt.y >= 0 && pt.y < height && pt.x >= 0 && pt.x < width) {
-                grid[pt.y][pt.x] = 1;
+                grid[pt.y][pt.x] = p.getType() + 1;
             }
         }
     }

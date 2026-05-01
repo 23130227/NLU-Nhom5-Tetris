@@ -42,11 +42,26 @@ public class BoardPanel extends JPanel {
         int[][] grid = model.getBoard().getGrid();
         for(int row = 0; row < grid.length; row++) {
             for(int col = 0; col < grid[row].length; col++) {
-                if(grid[row][col] != 0) {
-                    Color color = model.getCurrentPiece().getColor();
-                    drawSquare(g2,col*PIXELS_SIZE,row*PIXELS_SIZE,color);
+                int value = grid[row][col];
+                if(value != 0) {
+                    // Lấy lại màu gốc dựa vào giá trị lưu trong bảng (nhớ trừ đi 1)
+                    Color originalColor = getColorByID(value - 1);
+                    drawSquare(g2, col * PIXELS_SIZE, row * PIXELS_SIZE, originalColor);
                 }
             }
+        }
+    }
+
+    private Color getColorByID(int id) {
+        switch (id) {
+            case 0: return Color.CYAN;
+            case 1: return Color.BLUE;
+            case 2: return Color.ORANGE;
+            case 3: return Color.YELLOW;
+            case 4: return Color.GREEN;
+            case 5: return Color.MAGENTA;
+            case 6: return Color.RED;
+            default: return Color.GRAY;
         }
     }
 

@@ -1,6 +1,8 @@
 package controller;
 
+import model.Board;
 import model.GameModel;
+import model.Tetromino;
 import view.GameGUI;
 
 import java.awt.event.ActionEvent;
@@ -27,7 +29,16 @@ public class GameController {
     }
 
     public void gameLoop(){
-        model.getCurrentPiece().move(0, 1);
+        Tetromino current = model.getCurrentPiece();
+        Board board = model.getBoard();
+
+        if (board.isValidMove(current, current.getX(), current.getY() + 1)) {
+
+            current.move(0, 1);
+        } else {
+            board.lockPiece(current);
+            model.spawnNewPiece();
+        }
         view.refresh();
     }
 

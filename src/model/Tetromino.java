@@ -8,8 +8,10 @@ public class Tetromino {
     private int[][] matrix;
     private int x, y;
     private Color color;
+    private int type;
 
     public Tetromino(int type) {
+        this.type = type;
         this.x = 3;
         this.y = 0;
         switch (type) {
@@ -143,6 +145,8 @@ public class Tetromino {
     public int getY() {
         return y;
     }
+
+    public int getType() {return type;}
 
     public static void main(String[] args) {
         Tetromino t = new Tetromino(0);
