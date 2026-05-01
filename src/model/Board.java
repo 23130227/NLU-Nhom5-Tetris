@@ -30,7 +30,12 @@ public class Board {
     }
 
     public void lockPiece(Tetromino p) {
-
+        List<Point> points = p.getCoordinates();
+        for (Point pt : points) {
+            if (pt.y >= 0 && pt.y < height && pt.x >= 0 && pt.x < width) {
+                grid[pt.y][pt.x] = 1;
+            }
+        }
     }
 
     public List<Integer> scanFullLines() {
