@@ -57,7 +57,25 @@ public class Board {
     }
 
     public void clearAndShift(List<Integer> lines) {
+        if (lines.isEmpty()) return;
 
+        int writeRow = height - 1; // Con trỏ ghi (bắt đầu từ đáy)
+
+        for (int readRow = height - 1; readRow >= 0; readRow--) {
+            if (!lines.contains(readRow)) {
+                for (int col = 0; col < width; col++) {
+                    grid[writeRow][col] = grid[readRow][col];
+                }
+                writeRow--;
+            }
+        }
+
+        while (writeRow >= 0) {
+            for (int col = 0; col < width; col++) {
+                grid[writeRow][col] = 0;
+            }
+            writeRow--;
+        }
     }
 
     public int[][] getGrid() {
