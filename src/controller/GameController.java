@@ -47,4 +47,44 @@ public class GameController {
             gameTimer.stop();
         }
     }
+    // --- CÁC HÀM XỬ LÝ PHÍM BẤM ---
+
+    public void moveLeft() {
+        Tetromino current = model.getCurrentPiece();
+        // Hỏi Board xem sang trái (x - 1) có đụng tường không?
+        if (model.getBoard().isValidMove(current, current.getX() - 1, current.getY())) {
+            current.move(-1, 0);
+            view.refresh();
+        }
+    }
+
+    public void moveRight() {
+        Tetromino current = model.getCurrentPiece();
+        // Hỏi Board xem sang phải (x + 1) có đụng tường không?
+        if (model.getBoard().isValidMove(current, current.getX() + 1, current.getY())) {
+            current.move(1, 0);
+            view.refresh();
+        }
+    }
+
+    public void moveDown() {
+        // Tái sử dụng luôn hàm gameLoop() vì nó đã chứa sẵn logic rơi xuống 1 ô!
+        gameLoop();
+    }
+
+    public void rotatePiece() {
+        Tetromino current = model.getCurrentPiece();
+        // Cứ xoay bừa đi đã...
+        current.rotate();
+
+        // ...rồi hỏi Board xem xoay xong có bị kẹt vào tường/gạch khác không?
+        if (!model.getBoard().isValidMove(current, current.getX(), current.getY())) {
+            // BỊ KẸT RỒI! Phải xoay ngược lại.
+            // Vì hàm rotate của bạn xoay 90 độ, nên xoay thêm 3 lần nữa (270 độ) sẽ về chỗ cũ!
+            current.rotate();
+            current.rotate();
+            current.rotate();
+        }
+        view.refresh();
+    }
 }
