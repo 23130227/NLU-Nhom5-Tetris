@@ -81,4 +81,8 @@ public class Board {
     public int[][] getGrid() {
         return this.grid;
     }
+
+    public void reset() {
+        this.grid = new int[height][width];
+    }
 }
