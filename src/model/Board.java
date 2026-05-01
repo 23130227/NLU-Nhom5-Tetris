@@ -1,6 +1,7 @@
 package model;
 
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.List;
 
 public class Board {
@@ -39,11 +40,42 @@ public class Board {
     }
 
     public List<Integer> scanFullLines() {
-        return null;
+        List<Integer> fullLines = new ArrayList<>();
+        for (int row = height - 1; row >= 0; row--) {
+            boolean isFull = true;
+            for (int col = 0; col < width; col++) {
+                if (grid[row][col] == 0) {
+                    isFull = false;
+                    break;
+                }
+            }
+            if (isFull) {
+                fullLines.add(row);
+            }
+        }
+        return fullLines;
     }
 
     public void clearAndShift(List<Integer> lines) {
+        if (lines.isEmpty()) return;
 
+        int writeRow = height - 1; // Con trỏ ghi (bắt đầu từ đáy)
+
+        for (int readRow = height - 1; readRow >= 0; readRow--) {
+            if (!lines.contains(readRow)) {
+                for (int col = 0; col < width; col++) {
+                    grid[writeRow][col] = grid[readRow][col];
+                }
+                writeRow--;
+            }
+        }
+
+        while (writeRow >= 0) {
+            for (int col = 0; col < width; col++) {
+                grid[writeRow][col] = 0;
+            }
+            writeRow--;
+        }
     }
 
     public int[][] getGrid() {
