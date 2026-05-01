@@ -84,7 +84,26 @@ public class Tetromino {
     }
 
     public void rotate() {
+        int size = matrix.length;
+        int[][] rotatedMatrix = new int[size][size];
 
+        for (int i = 0; i < size; i++) {
+            for (int j = 0; j < size; j++) {
+                rotatedMatrix[j][size - 1 - i] = matrix[i][j];
+            }
+        }
+        this.matrix = rotatedMatrix;
+    }
+
+    public static void printMatrix(Tetromino t) {
+        int[][] m = t.getMatrix();
+        for (int[] row : m) {
+            for (int cell : row) {
+                System.out.print(cell + " ");
+            }
+            System.out.println();
+        }
+        System.out.println();
     }
 
     public List<Point> getCoordinates(int targetX, int targetY) {
@@ -92,10 +111,24 @@ public class Tetromino {
     }
 
     public int[][] getMatrix() {
-        return null;
+        return this.matrix;
     }
 
     public Color getColor() {
-        return null;
+        return this.color;
+    }
+
+    public static void main(String[] args) {
+        Tetromino t = new Tetromino(0);
+
+        System.out.println("Ban đầu:");
+        printMatrix(t);
+
+        t.move(1, 2);
+        System.out.println("Sau khi move (1,2): x=" + t.x + ", y=" + t.y);
+
+        t.rotate();
+        System.out.println("Sau khi rotate:");
+        printMatrix(t);
     }
 }
