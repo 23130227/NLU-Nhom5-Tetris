@@ -1,6 +1,7 @@
 package model;
 
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.List;
 
 public class Tetromino {
@@ -95,9 +96,8 @@ public class Tetromino {
         this.matrix = rotatedMatrix;
     }
 
-    public static void printMatrix(Tetromino t) {
-        int[][] m = t.getMatrix();
-        for (int[] row : m) {
+    public void printMatrix() {
+        for (int[] row : matrix) {
             for (int cell : row) {
                 System.out.print(cell + " ");
             }
@@ -107,7 +107,25 @@ public class Tetromino {
     }
 
     public List<Point> getCoordinates(int targetX, int targetY) {
-        return null;
+        List<Point> points = new ArrayList<>();
+        for (int row = 0; row < matrix.length; row++) {
+            for (int col = 0; col < matrix[row].length; col++) {
+                if (matrix[row][col] != 0) {
+                    points.add(new Point(targetX + col, targetY + row));
+                }
+            }
+        }
+        return points;
+    }
+
+    public List<Point> getCoordinates() {
+        return getCoordinates(x, y);
+    }
+
+    public void printCoords() {
+        for (Point p : getCoordinates()) {
+            System.out.println("(" + p.x + ", " + p.y + ")");
+        }
     }
 
     public int[][] getMatrix() {
@@ -118,17 +136,30 @@ public class Tetromino {
         return this.color;
     }
 
+    public int getX() {
+        return x;
+    }
+
+    public int getY() {
+        return y;
+    }
+
     public static void main(String[] args) {
         Tetromino t = new Tetromino(0);
 
         System.out.println("Ban đầu:");
-        printMatrix(t);
+        t.printMatrix();
+
+        System.out.println("Tọa độ ban đầu:");
+        t.printCoords();
 
         t.move(1, 2);
-        System.out.println("Sau khi move (1,2): x=" + t.x + ", y=" + t.y);
+        System.out.println("\nSau khi move (1,2):");
+        t.printCoords();
 
         t.rotate();
-        System.out.println("Sau khi rotate:");
-        printMatrix(t);
+        System.out.println("\nSau khi rotate:");
+        t.printMatrix();
+        t.printCoords();
     }
 }
