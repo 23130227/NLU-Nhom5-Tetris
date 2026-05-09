@@ -39,6 +39,20 @@ public class GameModel {
     public int getLevel() {
         return 0;
     }
+    public void updateScore(int lineCount) {
+        if (lineCount > 0) {
+            // Cách tính: 1 hàng = 100, 2 hàng = 300, 3 hàng = 500, 4 hàng = 800
+            int[] scoreTable = {0, 100, 300, 500, 800};
+            this.score += scoreTable[lineCount];
+
+            // Tăng level mỗi khi đạt 1000 điểm
+            this.level = (this.score / 1000) + 1;
+        }
+    }
+
+    public int getScore() {
+        return this.score;
+    }
 
     public GameState getState() {
         return this.state;
