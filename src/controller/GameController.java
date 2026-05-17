@@ -10,251 +10,198 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import javax.swing.Timer;
 
+/**
+ * {@code GameController} đóng vai trò là Bộ Điều Khiển (Controller) trong mô hình MVC.
+ *
+ * <p>Nhiệm vụ chính:
+ * <ul>
+ * <li>Quản lý vòng lặp chính của game thông qua {@link Timer}.</li>
+ * <li>Cập nhật trạng thái dữ liệu bên trong {@link GameModel}.</li>
+ * <li>Yêu cầu giao diện {@link GameGUI} vẽ lại (refresh) sau mỗi thay đổi.</li>
+ * <li>Xử lý các hành động di chuyển, xoay khối từ người chơi.</li>
+ * </ul>
+ */
 public class GameController {
 
-    // Timer điều khiển vòng lặp chính của game
+    /** Bộ đếm thời gian quản lý tốc độ rơi tự động của khối. */
     private Timer gameTimer;
 
-    // Model quản lý dữ liệu và trạng thái game
+    /** Tham chiếu đến Model để xử lý dữ liệu (bảng, khối hiện tại, điểm số...). */
     private GameModel model;
 
-    // View hiển thị giao diện game
+    /** Tham chiếu đến View để hiển thị đồ họa. */
     private GameGUI view;
 
-    // Biến kiểm tra cho phép người chơi nhấn soft drop
+    /** * Cờ kiểm soát soft drop (rơi nhanh).
+     * Giúp tránh việc khối mới vừa sinh ra đã rơi vèo xuống nếu người chơi giữ rịt phím DOWN.
+     */
     private boolean canSoftDrop = true;
 
-    // Constructor khởi tạo Controller
+    /**
+     * Khởi tạo GameController kết nối Model và View.
+     *
+     * @param model dữ liệu game
+     * @param view  giao diện game
+     */
     public GameController(GameModel model, GameGUI view) {
         this.model = model;
         this.view = view;
     }
 
-    /*
-     * =========================
-     * UC-01: BẮT ĐẦU GAME
-     * =========================
+    /**
+     * Bắt đầu chạy game.
+     * * <p>Tạo một {@link Timer} kích hoạt mỗi 500ms (tốc độ rơi mặc định).
+     * Mỗi lần timer tick, nó sẽ gọi hàm {@link #gameLoop()} để xử lý logic rơi.
      */
-
-    // Khởi động Game Timer và bắt đầu vòng lặp game
     public void startGame() {
-
-        // Tạo timer với delay 500ms
         gameTimer = new Timer(500, new ActionListener() {
-
             @Override
             public void actionPerformed(ActionEvent e) {
-
-                // Mỗi lần timer chạy sẽ cập nhật game
                 gameLoop();
             }
         });
-
-        // Bắt đầu timer
         gameTimer.start();
     }
 
-    // Xử lý vòng lặp chính của game
+    /**
+     * Vòng lặp chính (nhịp tim) của game, được gọi tự động bởi timer hoặc khi người chơi bấm rơi nhanh.
+     * * <p>Quy trình xử lý:
+     * <ol>
+     * <li>Kiểm tra Game Over. Nếu over thì dừng timer và hiện thông báo.</li>
+     * <li>Kiểm tra xem khối có thể rơi xuống 1 ô không.</li>
+     * <li>Nếu có: Di chuyển khối xuống.</li>
+     * <li>Nếu không (chạm đáy/chạm gạch):
+     * <ul>
+     * <li>Khóa khối lại trên bảng (lock).</li>
+     * <li>Quét và xóa các dòng đã đầy.</li>
+     * <li>Sinh khối mới và tạm vô hiệu hóa soft drop.</li>
+     * </ul>
+     * </li>
+     * <li>Cập nhật lại giao diện.</li>
+     * </ol>
+     */
     public void gameLoop() {
-
-        // Kiểm tra trạng thái game over
         if (model.getState() == GameState.GAME_OVER) {
-
-            // Dừng game
             pauseGame();
-
-            // Hiển thị thông báo game over
             view.showGameOver();
-
             return;
         }
 
-        // Lấy viên gạch hiện tại
         Tetromino current = model.getCurrentPiece();
-
-        // Lấy bàn chơi
         Board board = model.getBoard();
 
-        // Kiểm tra có thể di chuyển xuống không
         if (board.isValidMove(current, current.getX(), current.getY() + 1)) {
-
-            // Di chuyển xuống 1 ô
             current.move(0, 1);
-
         } else {
-
-            // Khóa viên gạch vào bàn chơi
             board.lockPiece(current);
 
-            // Kiểm tra các hàng đầy
             java.util.List<Integer> fullLines = board.scanFullLines();
-
-            // Nếu tồn tại hàng đầy
             if (!fullLines.isEmpty()) {
-
-                // Xóa hàng và dồn xuống
                 board.clearAndShift(fullLines);
             }
 
-            // Sinh viên gạch mới
             model.spawnNewPiece();
-
-            // Tắt soft drop tạm thời
             canSoftDrop = false;
         }
-
-        // Cập nhật giao diện
         view.refresh();
     }
 
-    /*
-     * =========================
-     * UC-02: TẠM DỪNG GAME
-     * =========================
+    /**
+     * Tạm dừng game bằng cách dừng {@link Timer}.
      */
-
-    // Tạm dừng game bằng cách dừng timer
     public void pauseGame() {
-
-        // Kiểm tra timer đang chạy
         if (gameTimer != null && gameTimer.isRunning()) {
-
-            // Dừng timer
             gameTimer.stop();
         }
     }
 
-    /*
-     * =========================
-     * UC-01: RESET / START GAME
-     * =========================
+    /**
+     * Khởi động game từ Menu hoặc Chơi lại từ đầu khi đã Game Over.
+     * * <p>Hàm này sẽ reset toàn bộ dữ liệu (điểm, bảng) về trạng thái ban đầu,
+     * reset cờ soft drop, dừng timer cũ (nếu có) và bắt đầu lại.
      */
-
-    // Bắt đầu lại game hoặc reset game
     public void startOrResetGame() {
-
-        // Chỉ reset khi ở MENU hoặc GAME OVER
-        if (model.getState() == GameState.GAME_OVER
-                || model.getState() == GameState.MENU) {
-
-            // Đặt lại dữ liệu game
+        if (model.getState() == GameState.GAME_OVER || model.getState() == GameState.MENU) {
             model.reset();
-
-            // Cho phép soft drop
             canSoftDrop = true;
 
-            // Nếu timer tồn tại thì dừng timer cũ
             if (gameTimer != null) {
                 gameTimer.stop();
             }
 
-            // Khởi động game mới
             startGame();
-
-            // Làm mới giao diện
             view.refresh();
         }
     }
 
-    /*
-     * =========================
-     * UC: DI CHUYỂN SANG TRÁI
-     * =========================
-     */
+    // --- CÁC HÀM XỬ LÝ PHÍM BẤM ---
 
+    /**
+     * Di chuyển khối sang trái.
+     * Chỉ thực hiện nếu {@link Board} xác nhận vị trí mới là hợp lệ.
+     */
     public void moveLeft() {
-
-        // Lấy viên gạch hiện tại
         Tetromino current = model.getCurrentPiece();
-
-        // Kiểm tra có thể di chuyển sang trái không
-        if (model.getBoard().isValidMove(
-                current,
-                current.getX() - 1,
-                current.getY())) {
-
-            // Di chuyển sang trái
+        // Hỏi Board xem sang trái (x - 1) có đụng tường không?
+        if (model.getBoard().isValidMove(current, current.getX() - 1, current.getY())) {
             current.move(-1, 0);
-
-            // Cập nhật giao diện
             view.refresh();
         }
     }
 
-    /*
-     * =========================
-     * UC: DI CHUYỂN SANG PHẢI
-     * =========================
+    /**
+     * Di chuyển khối sang phải.
+     * Chỉ thực hiện nếu {@link Board} xác nhận vị trí mới là hợp lệ.
      */
-
     public void moveRight() {
-
-        // Lấy viên gạch hiện tại
         Tetromino current = model.getCurrentPiece();
-
-        // Kiểm tra có thể di chuyển sang phải không
-        if (model.getBoard().isValidMove(
-                current,
-                current.getX() + 1,
-                current.getY())) {
-
-            // Di chuyển sang phải
+        // Hỏi Board xem sang phải (x + 1) có đụng tường không?
+        if (model.getBoard().isValidMove(current, current.getX() + 1, current.getY())) {
             current.move(1, 0);
-
-            // Cập nhật giao diện
             view.refresh();
         }
     }
 
-    /*
-     * =========================
-     * UC: SOFT DROP
-     * =========================
+    /**
+     * Tăng tốc độ rơi của khối (Soft Drop).
+     * * <p>Chỉ hoạt động nếu cờ {@code canSoftDrop} đang bật.
+     * Gọi trực tiếp {@link #gameLoop()} để ép khối rơi xuống 1 ô ngay lập tức.
      */
-
     public void moveDown() {
-
-        // Nếu được phép soft drop
+        // Tái sử dụng luôn hàm gameLoop() vì nó đã chứa sẵn logic rơi xuống 1 ô!
         if (canSoftDrop) {
-
-            // Gọi gameLoop để rơi xuống 1 ô
             gameLoop();
         }
     }
 
-    // Reset trạng thái soft drop
+    /**
+     * Đặt lại trạng thái cho phép rơi nhanh.
+     * Thường được gọi khi người chơi nhả phím DOWN.
+     */
     public void resetSoftDrop() {
-
         canSoftDrop = true;
     }
 
-    /*
-     * =========================
-     * UC: XOAY KHỐI GẠCH
-     * =========================
+    /**
+     * Xoay khối hiện tại góc 90 độ.
+     * * <p>Sử dụng cơ chế "Xoay thử - Kiểm tra - Hoàn tác":
+     * Thực hiện xoay trước, nếu vị trí mới không hợp lệ (kẹt tường/gạch)
+     * thì xoay thêm 3 lần nữa (270 độ) để trả khối về hình dáng ban đầu.
      */
-
     public void rotatePiece() {
-
-        // Lấy viên gạch hiện tại
         Tetromino current = model.getCurrentPiece();
-
-        // Xoay viên gạch
+        // Cứ xoay bừa đi đã...
         current.rotate();
 
-        // Kiểm tra sau khi xoay có hợp lệ không
-        if (!model.getBoard().isValidMove(
-                current,
-                current.getX(),
-                current.getY())) {
-
-            // Nếu không hợp lệ thì xoay ngược lại
+        // ...rồi hỏi Board xem xoay xong có bị kẹt vào tường/gạch khác không?
+        if (!model.getBoard().isValidMove(current, current.getX(), current.getY())) {
+            // BỊ KẸT RỒI! Phải xoay ngược lại.
+            // Vì hàm rotate của bạn xoay 90 độ, nên xoay thêm 3 lần nữa (270 độ) sẽ về chỗ cũ!
             current.rotate();
             current.rotate();
             current.rotate();
         }
-
-        // Cập nhật giao diện
         view.refresh();
     }
+
 }
