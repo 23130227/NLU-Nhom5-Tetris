@@ -51,7 +51,14 @@ public class GameModel {
      * @param lineCount số lượng dòng vừa bị xóa đi cùng lúc (thường là 1-4)
      */
     public void updateScore(int lineCount) {
+        if (lineCount > 0) {
+            // Cách tính: 1 hàng = 100, 2 hàng = 300, 3 hàng = 500, 4 hàng = 800
+            int[] scoreTable = {0, 100, 300, 500, 800};
+            this.score += scoreTable[lineCount];
 
+            // Tăng level mỗi khi đạt 1000 điểm
+            this.level = (this.score / 1000) + 1;
+        }
     }
 
     /**
@@ -97,7 +104,7 @@ public class GameModel {
      * @return điểm số
      */
     public int getScore() {
-        return 0;
+        return this.score;
     }
 
     /**
@@ -167,4 +174,5 @@ public class GameModel {
         System.out.println("Tọa độ xuất phát:");
         piece.printCoords();
     }
+
 }
