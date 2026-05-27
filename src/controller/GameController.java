@@ -98,6 +98,8 @@ public class GameController {
             java.util.List<Integer> fullLines = board.scanFullLines();
             if (!fullLines.isEmpty()) {
                 board.clearAndShift(fullLines);
+                model.updateScore(fullLines.size());
+
             }
 
             model.spawnNewPiece();
