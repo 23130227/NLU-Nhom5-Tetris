@@ -42,6 +42,15 @@ public class SidePanel extends JPanel {
         g2.setColor(Color.WHITE);
         g2.setStroke(new BasicStroke(3f));
 
+        // ===== 2. HOLD BOX =====
+        g2.setColor(Color.DARK_GRAY);
+        g2.fillRoundRect(10, 230, 260, 150, 20, 20);
+        g2.setColor(Color.white);
+        g2.drawRoundRect(10, 230, 260, 150, 20 , 20);
+        g2.setFont(new Font("Arial", Font.BOLD, 20));
+        g2.drawString("HOLD", 95, 260);
+        drawHoldPiece(g2);
+
         // ===== 3. NEXT BOX =====
         g2.setColor(Color.DARK_GRAY);
         g2.fillRoundRect(10, 400, 260, 200, 20, 20);
@@ -89,6 +98,10 @@ public class SidePanel extends JPanel {
         }
 
     }
+    private void drawHoldPiece(Graphics2D g2d) {
+        drawPreviewBox(g2d, 95, 300, model.getHoldPiece());
+    }
+
 
 
 }

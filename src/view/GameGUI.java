@@ -109,7 +109,7 @@ public class GameGUI {
         this.boardPanel = new BoardPanel(model);
 
         // TODO: Mở comment dòng này khi class SidePanel được hoàn thiện
-//        this.sidePanel = new SidePanel(model);
+        this.sidePanel = new SidePanel(model);
 
         // Container chính dùng BorderLayout để xếp 3 phần: Title (West) | Board (Center) | Info (East)
         JPanel mainContainer = new JPanel(new BorderLayout(30, 0));
@@ -121,7 +121,7 @@ public class GameGUI {
         mainContainer.add(boardPanel, BorderLayout.CENTER);
 
         // TODO: Mở comment dòng này khi class SidePanel được hoàn thiện
-//        mainContainer.add(sidePanel, BorderLayout.EAST);
+        mainContainer.add(sidePanel, BorderLayout.EAST);
 
         // Cấu hình Cửa sổ chính
         mainFrame.add(mainContainer);
