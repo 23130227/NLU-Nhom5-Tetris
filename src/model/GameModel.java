@@ -98,6 +98,13 @@ public class GameModel {
     }
 
     /**
+     *
+     */
+    public Tetromino getNextPiece() {
+        return this.nextPiece;
+    }
+
+    /**
      * Lấy điểm số hiện tại của người chơi.
      * <p><i>Lưu ý: Hiện tại đang hardcode trả về 0, cần cập nhật trả về biến score thực tế.</i>
      *
