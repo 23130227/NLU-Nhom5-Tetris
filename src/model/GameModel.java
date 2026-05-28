@@ -32,6 +32,9 @@ public class GameModel {
     /** Khối gạch đang được cất giữ (tính năng Hold). */
     private Tetromino holdPiece;
 
+    /** Kiểm soát: Mỗi lượt rơi chỉ được đổi gạch (Hold) đúng 1 lần */
+    private boolean canHold = true;
+
     /** Bảng chơi chính chứa các khối gạch đã rơi xuống đáy. */
     private Board board;
     /** Bộ đếm combo hiện tại. -1 nghĩa là chưa có chuỗi nào. */
@@ -110,6 +113,8 @@ public class GameModel {
         if (!board.isValidMove(currentPiece, currentPiece.getX(), currentPiece.getY())) {
             setGameOver();
         }
+        // Khi một khối gạch mới hoàn toàn xuất hiện, mở lại quyền sử dụng tính năng Hold
+        this.canHold = true;
     }
 
     /**
@@ -117,7 +122,35 @@ public class GameModel {
      * <p><i>Lưu ý: Hàm này hiện tại đang để trống (placeholder) chờ được implement logic tráo đổi.</i>
      */
     public void holdCurrentPiece() {
+        /** Nếu lượt này đã đổi gạch rồi thì không cho phép đổi nữa */
+        if (!canHold) {
+            return;
+        }
 
+        if (holdPiece == null) {
+            /** Trường hợp 1: Ô Hold đang trống */
+            holdPiece = currentPiece;
+            /** Sinh luôn khối gạch tiếp theo để người chơi đá tiếp */
+            spawnNewPiece();
+        } else {
+            /** Trường hợp 2: Đã có gạch trong ô Hold, tiến hành hoán đổi (Swap) */
+            Tetromino temp = currentPiece;
+            currentPiece = holdPiece;
+            holdPiece = temp;
+
+            /** Đặt lại tọa độ xuất phát cho khối gạch vừa lấy từ ô Hold ra ở đỉnh bàn cờ */
+            /** Thường là ở giữa chiều rộng của Board (ví dụ: x = 3 hoặc 4, y = 0) */
+            currentPiece.setX(4);
+            currentPiece.setY(0);
+        }
+
+        /** Khóa tính năng Hold lại, chỉ mở ra khi khối gạch này được hạ cánh và sinh khối mới */
+        canHold = false;
+    }
+
+    /** Hàm getter để sau này lớp View (SidePanel) lấy khối gạch ra vẽ lên UI */
+    public Tetromino getHeldPiece() {
+        return holdPiece;
     }
 
     /**
@@ -159,7 +192,7 @@ public class GameModel {
      * @return cấp độ
      */
     public int getLevel() {
-        return 0;
+        return this.level;
     }
 
     /**
