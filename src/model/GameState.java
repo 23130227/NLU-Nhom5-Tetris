@@ -7,7 +7,6 @@ package model;
  * giúp Controller và View biết nên cập nhật logic hay vẽ màn hình nào.
  */
 public enum GameState {
-
     /** * Trạng thái khi vừa mở game hoặc đang ở màn hình chờ (Menu).
      * Game chưa bắt đầu.
      */
