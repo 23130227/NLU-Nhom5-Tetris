@@ -42,6 +42,13 @@ public class SidePanel extends JPanel {
         g2.setColor(Color.WHITE);
         g2.setStroke(new BasicStroke(3f));
 
+        // ===== 1. STATUS BOX =====
+        g2.setColor(Color.DARK_GRAY);           // màu nền
+        g2.fillRoundRect(10, 10, 260, 200, 20, 20);
+        g2.setColor(Color.white);
+        g2.drawRoundRect(10, 10, 260, 200, 20 , 20);
+        drawStatus(g2);
+
         // ===== 2. HOLD BOX =====
         g2.setColor(Color.DARK_GRAY);
         g2.fillRoundRect(10, 230, 260, 150, 20, 20);
@@ -102,6 +109,19 @@ public class SidePanel extends JPanel {
         drawPreviewBox(g2d, 95, 300, model.getHoldPiece());
     }
 
+    private void drawStatus(Graphics2D g2d) {
+        g2d.setColor(Color.WHITE);
+        g2d.setFont(new Font("Arial", Font.BOLD, 20));
+
+        g2d.drawString("SCORE", 20, 50);
+        g2d.setFont(new Font("Arial", Font.PLAIN, 25));
+        g2d.drawString(String.valueOf(model.getScore()), 20, 80);
+
+        g2d.setFont(new Font("Arial", Font.BOLD, 20));
+        g2d.drawString("LEVEL", 20, 150);
+        g2d.setFont(new Font("Arial", Font.PLAIN, 25));
+        g2d.drawString(String.valueOf(model.getLevel()), 20, 180);
+    }
 
 
 }
