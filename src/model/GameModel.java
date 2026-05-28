@@ -34,6 +34,8 @@ public class GameModel {
 
     /** Bảng chơi chính chứa các khối gạch đã rơi xuống đáy. */
     private Board board;
+    /** Bộ đếm combo hiện tại. -1 nghĩa là chưa có chuỗi nào. */
+    private int comboCount = -1;
 
     /**
      * Khởi tạo GameModel mới.
@@ -52,13 +54,43 @@ public class GameModel {
      */
     public void updateScore(int lineCount) {
         if (lineCount > 0) {
-            // Cách tính: 1 hàng = 100, 2 hàng = 300, 3 hàng = 500, 4 hàng = 800
-            int[] scoreTable = {0, 100, 300, 500, 800};
-            this.score += scoreTable[lineCount];
+            // 1. Tăng bộ đếm combo
+            comboCount++;
 
-            // Tăng level mỗi khi đạt 1000 điểm
+            // 2. Điểm cơ bản (1 hàng = 100, 2 hàng = 300, 3 hàng = 500, 4 hàng = 800)
+            int[] scoreTable = {0, 100, 300, 500, 800};
+            int baseScore = scoreTable[lineCount];
+
+            // 3. Điểm thưởng Combo
+            // Công thức: 50 * số combo * cấp độ (level) hiện tại
+            int comboBonus = 0;
+            if (comboCount > 0) {
+                // Sử dụng this.level mặc định bằng 1 nếu chưa tăng cấp, hoặc getLevel()
+                int currentLevel = Math.max(1, this.level);
+                comboBonus = 50 * comboCount * currentLevel;
+                System.out.println("Combo x" + comboCount + "! Thưởng: " + comboBonus); // In ra console để test
+            }
+
+            // 4. Cộng tổng điểm
+            this.score += (baseScore + comboBonus);
+
+            // 5. Tăng level mỗi khi đạt 1000 điểm
             this.level = (this.score / 1000) + 1;
         }
+    }
+    /**
+     * Đặt lại bộ đếm combo về ban đầu.
+     * Được gọi khi người chơi thả một khối mà không ăn được hàng nào.
+     */
+    public void resetCombo() {
+        this.comboCount = -1;
+    }
+
+    /**
+     * Lấy số combo hiện tại (phục vụ cho việc hiển thị lên SidePanel sau này).
+     */
+    public int getComboCount() {
+        return this.comboCount;
     }
 
     /**
@@ -163,6 +195,7 @@ public class GameModel {
         board.reset();
         score = 0;
         level = 1;
+        comboCount = -1; // Thêm dòng này để reset combo khi chơi lại
         state = GameState.PLAYING;
         spawnNewPiece();
     }

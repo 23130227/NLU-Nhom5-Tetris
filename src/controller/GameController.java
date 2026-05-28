@@ -100,6 +100,9 @@ public class GameController {
                 board.clearAndShift(fullLines);
                 model.updateScore(fullLines.size());
 
+            } else{
+                // Nếu không có dòng nào bị xóa, reset combo về -1 (chưa có chuỗi nào)
+                model.resetCombo();
             }
 
             model.spawnNewPiece();
