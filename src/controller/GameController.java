@@ -179,6 +179,20 @@ public class GameController {
         }
     }
 
+    /** Xử lý tính năng Hold: Đổi khối hiện tại với khối đang giữ trong ô Hold.
+     * * <p>Chỉ cho phép đổi nếu game đang ở trạng thái PLAYING và cờ Hold chưa bị khóa.
+     * Sau khi đổi thành công, yêu cầu giao diện vẽ lại ngay lập tức.
+     */
+    public void handleHoldPiece() {
+        // Chỉ cho phép đổi gạch khi game đang ở trạng thái chơi (PLAYING)
+        if (model.getState() == GameState.PLAYING) {
+            model.holdCurrentPiece();
+
+            // Sau khi đổi gạch thành công, yêu cầu giao diện vẽ lại ngay lập tức
+            view.refresh();
+        }
+    }
+
     /**
      * Đặt lại trạng thái cho phép rơi nhanh.
      * Thường được gọi khi người chơi nhả phím DOWN.
