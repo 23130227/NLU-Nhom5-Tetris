@@ -142,7 +142,7 @@ public class GameGUI {
         boardPanel.repaint(); // Yêu cầu BoardPanel vẽ lại
 
         // TODO: Mở comment dòng này khi class SidePanel được hoàn thiện
-//        sidePanel.repaint();
+      sidePanel.repaint();
     }
 
     /**
