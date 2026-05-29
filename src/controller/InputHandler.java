@@ -71,6 +71,11 @@ public class InputHandler extends KeyAdapter {
                 controller.rotatePiece();
                 break;
 
+                // kich hoat tinh nang doi gach
+            case KeyEvent.VK_C:
+                controller.handleHoldPiece();
+                break;
+
             default:
                 // Các phím khác: bỏ qua
                 break;
