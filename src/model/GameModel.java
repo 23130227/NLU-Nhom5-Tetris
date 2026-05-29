@@ -40,7 +40,14 @@ public class GameModel {
     /** Bộ đếm combo hiện tại. -1 nghĩa là chưa có chuỗi nào. */
     private int comboCount = -1;
 
-    /**
+    /** Lưu điểm top10 ngưởi chơi và lưu vào file
+     *
+     */
+     private static final String HIGHSCORE_FILE = "highscore.txt";
+     private static final int MAX_TOP_PLAYERS = 10;
+
+
+     /**
      * Khởi tạo GameModel mới.
      * Mặc định khi mới tạo ra, game sẽ ở trạng thái MENU và khởi tạo một bảng chơi trống.
      */
@@ -231,6 +238,45 @@ public class GameModel {
         comboCount = -1; // Thêm dòng này để reset combo khi chơi lại
         state = GameState.PLAYING;
         spawnNewPiece();
+    }
+    /**
+     * Hàm ghi điểm cao nhất cảu người chơi vào file.
+     */
+    public void saveCurrentScoreToFile() {
+        java.util.List<Integer> scores = loadScoresFromFile();
+        scores.add(this.score); // Lấy trực tiếp biến score có sẵn của GameModel
+
+        // Sắp xếp giảm dần (Điểm cao đứng trước)
+        java.util.Collections.sort(scores, java.util.Collections.reverseOrder());
+
+        // Cắt bớt nếu vượt quá top 10 người chơi
+        if (scores.size() > MAX_TOP_PLAYERS) {
+            scores = scores.subList(0, MAX_TOP_PLAYERS);
+        }
+
+
+    }
+
+    // Hàm đọc danh sách điểm từ file txt lên hệ thống
+    public java.util.List<Integer> loadScoresFromFile() {
+        java.util.List<Integer> scores = new java.util.ArrayList<>();
+        java.io.File file = new java.io.File(HIGHSCORE_FILE);
+
+        if (!file.exists()) {
+            return scores;
+        }
+
+        try (java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.FileReader(file))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (!line.trim().isEmpty()) {
+                    scores.add(Integer.parseInt(line.trim()));
+                }
+            }
+        } catch (java.io.IOException | NumberFormatException e) {
+            System.err.println("Lỗi khi đọc file Highscore: " + e.getMessage());
+        }
+        return scores;
     }
 
     /**
