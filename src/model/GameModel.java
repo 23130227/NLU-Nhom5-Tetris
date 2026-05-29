@@ -112,14 +112,24 @@ public class GameModel {
      */
     public void spawnNewPiece() {
         Random rand = new Random();
-        // randomId từ 0 đến 6 tương ứng với 7 loại khối Tetromino (I, J, L, O, S, T, Z)
-        int randomId = rand.nextInt(7);
-        this.currentPiece = new Tetromino(randomId);
 
-        // Kiểm tra xem vị trí sinh ra có bị đụng gạch cũ không
+        // 1. Nếu là lần đầu tiên chạy game (nextPiece chưa có gì), random viên đầu tiên
+        if (this.nextPiece == null) {
+            this.nextPiece = new Tetromino(rand.nextInt(7));
+        }
+
+        // 2. Lấy viên gạch tiếp theo ra làm viên gạch hiện tại đang rơi
+        this.currentPiece = this.nextPiece;
+
+        // 3. Random ra trước viên gạch tiếp theo (dành cho lượt sau)
+        int randomId = rand.nextInt(7);
+        this.nextPiece = new Tetromino(randomId);
+
+        // Kiểm tra xem vị trí sinh ra có bị đụng gạch cũ không (Game Over)
         if (!board.isValidMove(currentPiece, currentPiece.getX(), currentPiece.getY())) {
             setGameOver();
         }
+
         // Khi một khối gạch mới hoàn toàn xuất hiện, mở lại quyền sử dụng tính năng Hold
         this.canHold = true;
     }
@@ -237,6 +247,7 @@ public class GameModel {
         level = 1;
         comboCount = -1; // Thêm dòng này để reset combo khi chơi lại
         state = GameState.PLAYING;
+        this.nextPiece = null;
         spawnNewPiece();
     }
     /**
