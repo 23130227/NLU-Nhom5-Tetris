@@ -72,7 +72,7 @@ public class InputHandler extends KeyAdapter {
                 break;
 
                 // kich hoat tinh nang doi gach
-            case KeyEvent.VK_C:
+            case KeyEvent.VK_SHIFT:
                 controller.handleHoldPiece();
                 break;
 
