@@ -134,10 +134,14 @@ public class GameGUI {
     }
 
     /**
-     * Cập nhật lại giao diện đồ họa.
-     * Hàm này thường được gọi từ GameController sau mỗi lần gạch rơi hoặc di chuyển
-     * để vẽ lại trạng thái mới nhất của trò chơi.
+     * [UC-01 - Bước Cập nhật] Ép vùng thông tin phụ (SidePanel) vẽ lại số "1" lên giao diện
      */
+    public void updateLevelUI(int level) {
+        if (sidePanel != null) {
+            sidePanel.repaint();
+        }
+    }
+
     public void refresh(){
         boardPanel.repaint(); // Yêu cầu BoardPanel vẽ lại
 
