@@ -24,7 +24,7 @@ public class SidePanel extends JPanel {
     // TODO: Viết hàm khởi tạo (Constructor) nhận vào GameModel để lấy dữ liệu.
     // TODO: Ghi đè hàm paintComponent nếu muốn tự vẽ gạch giống như BoardPanel.
     private GameModel model;
-    private static final int TILE_SIZE = 20;
+    private static final int PIXELS_SIZE = 20;
 
     public  SidePanel(GameModel model) {
         this.model = model;
@@ -78,27 +78,29 @@ public class SidePanel extends JPanel {
 
         if (nextPiece != null) {
             int[][] matrix = nextPiece.getMatrix();
-            g2d.setColor(nextPiece.getColor());
+            Color color = nextPiece.getColor();
+            g2d.setColor(color);
 
             for(int row = 0; row < matrix.length; row++) {
                 for(int col = 0; col < matrix[row].length; col++) {
                     if(matrix[row][col] == 1) {
-                        int px = x+col*TILE_SIZE;
-                        int py = y+row*TILE_SIZE;
+                        int px = x+col*PIXELS_SIZE;
+                        int py = y+row*PIXELS_SIZE;
 
                         int margin = 2;
-                        g2d.fillRect(px + margin, py + margin, TILE_SIZE - margin*2, TILE_SIZE - margin*2);
+                        g2d.setColor(color);
+                        g2d.fillRect(px + margin, py + margin, PIXELS_SIZE - margin*2, PIXELS_SIZE - margin*2);
 
                         // Vẽ viền sáng (Top & Left) để tạo hiệu ứng 3D
-                        g2d.setColor(nextPiece.getColor().brighter());
+                        g2d.setColor(color.brighter());
                         g2d.setStroke(new BasicStroke(2));
-                        g2d.drawLine(px, py, px + TILE_SIZE, py); // Cạnh trên
-                        g2d.drawLine(px, py, px, py + TILE_SIZE); // Cạnh trái
+                        g2d.drawLine(px, py, px + PIXELS_SIZE, py); // Cạnh trên
+                        g2d.drawLine(px, py, px, py + PIXELS_SIZE); // Cạnh trái
 
                         // Vẽ viền tối (Bottom & Right)
-                        g2d.setColor(nextPiece.getColor().darker());
-                        g2d.drawLine(px, py + TILE_SIZE, px + TILE_SIZE, py + TILE_SIZE); // Cạnh dưới
-                        g2d.drawLine(px + TILE_SIZE, py, px + TILE_SIZE, py + TILE_SIZE);
+                        g2d.setColor(color.darker());
+                        g2d.drawLine(px, py + PIXELS_SIZE, px + PIXELS_SIZE, py + PIXELS_SIZE); // Cạnh dưới
+                        g2d.drawLine(px + PIXELS_SIZE, py, px + PIXELS_SIZE, py + PIXELS_SIZE); // Cạnh phải
                     }
                 }
             }
