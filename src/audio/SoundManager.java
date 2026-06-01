@@ -91,4 +91,24 @@ public class SoundManager {
     public boolean isMusicPlaying() {
         return clip != null && clip.isRunning();
     }
+    /**
+     * Phát hiệu ứng âm thanh (SFX) một lần duy nhất.
+     * Tạo một đối tượng Clip cục bộ để không làm đụng độ nhạc nền đang phát.
+     *
+     * @param fileName đường dẫn tới file âm thanh (.wav)
+     */
+    public void playSFX(String fileName) {
+        try {
+            // Khởi tạo luồng âm thanh mới
+            AudioInputStream audio = AudioSystem.getAudioInputStream(new File(fileName));
+            Clip sfxClip = AudioSystem.getClip();
+            sfxClip.open(audio);
+
+            // start() chỉ phát 1 lần rồi tự kết thúc, KHÔNG dùng loop()
+            sfxClip.start();
+
+        } catch (Exception e) {
+            System.err.println("Lỗi phát âm thanh Combo: " + e.getMessage());
+        }
+    }
 }

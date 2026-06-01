@@ -58,33 +58,36 @@ public class GameModel {
 
     /**
      * Cập nhật điểm số dựa trên số dòng vừa ăn được.
-     * <p><i>Lưu ý: Hàm này hiện tại đang để trống (placeholder) chờ được implement.</i>
+     * LUẬT MỚI: Chỉ ăn từ 2 hàng trở lên mới được tính là Combo.
      *
      * @param lineCount số lượng dòng vừa bị xóa đi cùng lúc (thường là 1-4)
      */
     public void updateScore(int lineCount) {
         if (lineCount > 0) {
-            // 1. Tăng bộ đếm combo
-            comboCount++;
-
-            // 2. Điểm cơ bản (1 hàng = 100, 2 hàng = 300, 3 hàng = 500, 4 hàng = 800)
+            // 1. Điểm cơ bản (1 hàng = 100, 2 hàng = 300, 3 hàng = 500, 4 hàng = 800)
             int[] scoreTable = {0, 100, 300, 500, 800};
             int baseScore = scoreTable[lineCount];
 
-            // 3. Điểm thưởng Combo
-            // Công thức: 50 * số combo * cấp độ (level) hiện tại
             int comboBonus = 0;
-            if (comboCount > 0) {
-                // Sử dụng this.level mặc định bằng 1 nếu chưa tăng cấp, hoặc getLevel()
+
+            // 2. LUẬT MỚI: Chỉ khi ăn từ 2 hàng trở lên mới tăng Combo
+            if (lineCount >= 2) {
+                this.comboCount++; // Tăng chuỗi combo lên
+
                 int currentLevel = Math.max(1, this.level);
-                comboBonus = 50 * comboCount * currentLevel;
-                System.out.println("Combo x" + comboCount + "! Thưởng: " + comboBonus); // In ra console để test
+                comboBonus = 50 * this.comboCount * currentLevel;
+
+                System.out.println("=> COMBO x" + this.comboCount + " KÍCH HOẠT! Thưởng Combo: +" + comboBonus);
+            } else {
+                // Nếu lượt này chỉ ăn 1 hàng đơn lẻ -> Bị đứt chuỗi Combo cũ, đưa về 0
+                resetCombo();
+                System.out.println("=> Xóa 1 hàng đơn lẻ (Không có thưởng Combo)");
             }
 
-            // 4. Cộng tổng điểm
+            // 3. Cộng tổng điểm
             this.score += (baseScore + comboBonus);
 
-            // 5. Tăng level mỗi khi đạt 1000 điểm
+            // 4. Tăng level mỗi khi đạt 1000 điểm
             this.level = (this.score / 1000) + 1;
         }
     }
@@ -93,7 +96,7 @@ public class GameModel {
      * Được gọi khi người chơi thả một khối mà không ăn được hàng nào.
      */
     public void resetCombo() {
-        this.comboCount = -1;
+        this.comboCount = 0;
     }
 
     /**
@@ -245,7 +248,7 @@ public class GameModel {
         board.reset();
         score = 0;
         level = 1;
-        comboCount = -1; // Thêm dòng này để reset combo khi chơi lại
+        comboCount = 0; // Thêm dòng này để reset combo khi chơi lại
         state = GameState.PLAYING;
         this.nextPiece = null;
         spawnNewPiece();
