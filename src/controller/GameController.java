@@ -1,5 +1,6 @@
 package controller;
 
+import audio.SoundManager;
 import model.Board;
 import model.GameModel;
 import model.GameState;
@@ -32,6 +33,8 @@ public class GameController {
     /** Tham chiếu đến View để hiển thị đồ họa. */
     private GameGUI view;
 
+    /** */
+    private SoundManager soundManager;
     /** * Cờ kiểm soát soft drop (rơi nhanh).
      * Giúp tránh việc khối mới vừa sinh ra đã rơi vèo xuống nếu người chơi giữ rịt phím DOWN.
      */
@@ -46,6 +49,7 @@ public class GameController {
     public GameController(GameModel model, GameGUI view) {
         this.model = model;
         this.view = view;
+        this.soundManager = new SoundManager();
     }
 
     /**
@@ -221,6 +225,24 @@ public class GameController {
             current.rotate();
         }
         view.refresh();
+    }
+    /**
+     * Bật hoặc tắt nhạc nền trong game.
+     *
+     * <p>Phương thức hoạt động theo cơ chế Toggle:
+     * <ul>
+     *     <li>Nếu nhạc chưa phát → bắt đầu phát.</li>
+     *     <li>Nếu nhạc đang phát → dừng phát.</li>
+     * </ul>
+     *
+     * <p>Hàm này thường được gọi khi người chơi nhấn phím M.
+     */
+    public void toggleMusic() {
+        if (!soundManager.isMusicPlaying()) {
+            soundManager.play("src/audio/Tetris.wav");
+        } else {
+            soundManager.stopMusic();
+        }
     }
 
 }

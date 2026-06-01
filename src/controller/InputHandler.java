@@ -76,6 +76,9 @@ public class InputHandler extends KeyAdapter {
                 controller.handleHoldPiece();
                 break;
 
+            case  KeyEvent.VK_M:
+                controller.toggleMusic();
+                break;
             default:
                 // Các phím khác: bỏ qua
                 break;
