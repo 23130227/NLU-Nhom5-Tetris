@@ -142,7 +142,7 @@ public class GameGUI {
         boardPanel.repaint(); // Yêu cầu BoardPanel vẽ lại
 
         // TODO: Mở comment dòng này khi class SidePanel được hoàn thiện
-//        sidePanel.repaint();
+       sidePanel.repaint();
     }
 
     /**
@@ -152,7 +152,41 @@ public class GameGUI {
     public void showGameOver(){
         String over = JOptionPane.showInputDialog(mainFrame, "Game Over!\nScore:" + model.getScore() +
                 "\nEnter your name:", "Game Over", JOptionPane.INFORMATION_MESSAGE);
+
+        int finalScore = model.getScore();
+        model.saveHighscore(over, finalScore);
+
+        //  Lấy danh sách Top 10 đã được sắp xếp từ file lên
+        java.util.List<String> topScores = model.loadScoresFromFile();
+
+        //Bảng xếp hạng
+        StringBuilder leaderboard = new StringBuilder();
+        leaderboard.append("🏆 BẢNG XẾP HẠNG TOP 10 ĐIỂM CAO HỆ THỐNG 🏆\n");
+        leaderboard.append("=========================================\n");
+
+        if (topScores.isEmpty()) {
+            leaderboard.append("Chưa có kỷ lục nào được ghi nhận.\n");
+        } else {
+            for (int i = 0; i < topScores.size(); i++) {
+                // Tách chuỗi dữ liệu "Tên:Điểm" bằng dấu hai chấm
+                String[] parts = topScores.get(i).split(":");
+                String name = parts[0];
+                String score = parts[1];
+                // Định dạng căn lề trái cho tên người chơi để bảng điểm thẳng hàng
+                leaderboard.append(String.format(" Hạng %d: %-15s - %s điểm\n", (i + 1), name, score));
+            }
+        }
+        leaderboard.append("=========================================\n");
+        leaderboard.append("Nhấn OK để làm mới và bắt đầu màn chơi mới!");
+
+        // Hiển thị bảng vàng điểm cao lên màn hình
+        JOptionPane.showMessageDialog(mainFrame, leaderboard.toString(), "Bảng Vàng Kỷ Lục", JOptionPane.INFORMATION_MESSAGE);
+
+        // 5. KHỞI ĐỘNG LẠI: Gọi hàm reset ván đấu sẵn có của nhóm (ví dụ: startOrResetGame())
+        model.reset();
+        refresh();
     }
+
 
     /**
      * Lấy tham chiếu đến cửa sổ chính của game.

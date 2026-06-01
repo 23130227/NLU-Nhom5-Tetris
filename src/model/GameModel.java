@@ -243,40 +243,31 @@ public class GameModel {
      * Hàm ghi điểm cao nhất cảu người chơi vào file.
      */
     public void saveCurrentScoreToFile() {
-        java.util.List<Integer> scores = loadScoresFromFile();
-        scores.add(this.score); // Lấy trực tiếp biến score có sẵn của GameModel
-
-        // Sắp xếp giảm dần (Điểm cao đứng trước)
-        java.util.Collections.sort(scores, java.util.Collections.reverseOrder());
-
-        // Cắt bớt nếu vượt quá top 10 người chơi
-        if (scores.size() > MAX_TOP_PLAYERS) {
-            scores = scores.subList(0, MAX_TOP_PLAYERS);
-        }
-
-
+        saveHighscore("Player", this.score);
     }
 
-    // Hàm đọc danh sách điểm từ file txt lên hệ thống
-    public java.util.List<Integer> loadScoresFromFile() {
-        java.util.List<Integer> scores = new java.util.ArrayList<>();
+    /**
+     * Hàm đọc danh sách kỷ lục từ file txt lên hệ thống dưới dạng List chuỗi.
+     */
+    public java.util.List<String> loadScoresFromFile() {
+        java.util.List<String> records = new java.util.ArrayList<>();
         java.io.File file = new java.io.File(HIGHSCORE_FILE);
 
         if (!file.exists()) {
-            return scores;
+            return records;
         }
 
         try (java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.FileReader(file))) {
             String line;
             while ((line = reader.readLine()) != null) {
-                if (!line.trim().isEmpty()) {
-                    scores.add(Integer.parseInt(line.trim()));
+                if (!line.trim().isEmpty() && line.contains(":")) {
+                    records.add(line.trim());
                 }
             }
-        } catch (java.io.IOException | NumberFormatException e) {
+        } catch (java.io.IOException e) {
             System.err.println("Lỗi khi đọc file Highscore: " + e.getMessage());
         }
-        return scores;
+        return records;
     }
 
     /**
@@ -300,4 +291,37 @@ public class GameModel {
         piece.printCoords();
     }
 
+    public void saveHighscore(String over, int finalScore) {
+        if (over == null || over.trim().isEmpty()) {
+            over = "Player";
+        }
+
+        // Đọc danh sách cũ lên từ file highscore.txt
+        java.util.List<String> records = loadScoresFromFile();
+        records.add(over.trim() + ":" + finalScore);
+
+        // Thuật toán sắp xếp danh sách kỷ lục theo số điểm giảm dần
+        java.util.Collections.sort(records, new java.util.Comparator<String>() {
+            @Override
+            public int compare(String o1, String o2) {
+                int score1 = Integer.parseInt(o1.split(":")[1]);
+                int score2 = Integer.parseInt(o2.split(":")[1]);
+                return Integer.compare(score2, score1); // Điểm cao xếp lên trước
+            }
+        });
+
+        // Cắt bớt nếu vượt quá số lượng tối đa của nhóm (MAX_TOP_PLAYERS = 10)
+        if (records.size() > MAX_TOP_PLAYERS) {
+            records = records.subList(0, MAX_TOP_PLAYERS);
+        }
+
+        // Ghi ngược dữ liệu đã sắp xếp xuống file txt
+        try (java.io.BufferedWriter writer = new java.io.BufferedWriter(new java.io.FileWriter(HIGHSCORE_FILE))) {
+            for (String record : records) {
+                writer.write(record + "\n");
+            }
+        } catch (java.io.IOException e) {
+            System.err.println("Lỗi khi ghi file Highscore: " + e.getMessage());
+        }
+    }
 }
