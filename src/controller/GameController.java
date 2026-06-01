@@ -9,6 +9,7 @@ import view.GameGUI;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.List;
 import javax.swing.Timer;
 
 /**
@@ -245,4 +246,23 @@ public class GameController {
         }
     }
 
+    public void hardDrop() {
+        Tetromino current = model.getCurrentPiece();
+        Board board = model.getBoard();
+        while(board.isValidMove(current, current.getX(), current.getY() + 1)) {
+            current.move(0, 1);
+        }
+        board.lockPiece(current);
+
+        List<Integer> fullLines = board.scanFullLines();
+        if (!fullLines.isEmpty()) {
+            board.clearAndShift(fullLines);
+            model.updateScore(fullLines.size());
+        } else{
+            // Nếu không có dòng nào bị xóa, reset combo về -1 (chưa có chuỗi nào)
+            model.resetCombo();
+        }
+        model.spawnNewPiece();
+        view.refresh();
+    }
 }
