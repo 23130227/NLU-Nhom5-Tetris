@@ -264,8 +264,6 @@ public class GameModel {
         if (scores.size() > MAX_TOP_PLAYERS) {
             scores = scores.subList(0, MAX_TOP_PLAYERS);
         }
-
-
     }
 
     // Hàm đọc danh sách điểm từ file txt lên hệ thống
@@ -289,7 +287,28 @@ public class GameModel {
         }
         return scores;
     }
+    // NÂNG CẤP TÍNH NĂNG BÓNG GẠCH
+    /**
+     * Thuật toán tìm tọa độ Y thấp nhất mà khối gạch hiện tại có thể rơi xuống (vị trí của bóng gạch).
+     * Hàm này duyệt từ vị trí Y hiện tại, tăng dần cho tới khi va chạm.
+     * * @return tọa độ Y sâu nhất hợp lệ dưới đáy bàn cờ
+     */
+    public int getGhostY() {
+        if (currentPiece == null) {
+            return 0;
+        }
 
+        // Bắt đầu từ tọa độ Y hiện tại của khối gạch đang rơi
+        int ghostY = currentPiece.getY();
+
+        // Vòng lặp thử đi xuống: Nếu ô tiếp theo (ghostY + 1) vẫn trống và hợp lệ thì đi xuống tiếp
+        while (board.isValidMove(currentPiece, currentPiece.getX(), ghostY + 1)) {
+            ghostY++;
+        }
+
+        // Trả về tọa độ Y sâu nhất tìm được để lớp View sử dụng để vẽ bóng
+        return ghostY;
+    }
     /**
      * Hàm main dùng để test (kiểm thử) hoạt động của GameModel.
      * Chạy độc lập không cần giao diện.
