@@ -58,13 +58,13 @@ public class GameController {
      * Mỗi lần timer tick, nó sẽ gọi hàm {@link #gameLoop()} để xử lý logic rơi.
      */
     public void startGame() {
+        // Khởi tạo nhịp đập mặc định ban đầu
         gameTimer = new Timer(500, new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 gameLoop();
             }
         });
-        gameTimer.start();
     }
 
     /**
@@ -129,20 +129,47 @@ public class GameController {
     }
 
     /**
-     * Khởi động game từ Menu hoặc Chơi lại từ đầu khi đã Game Over.
-     * * <p>Hàm này sẽ reset toàn bộ dữ liệu (điểm, bảng) về trạng thái ban đầu,
-     * reset cờ soft drop, dừng timer cũ (nếu có) và bắt đầu lại.
+     * [UC-01] Hàm điều phối chính kích hoạt từ nút "Bắt đầu" (1.1.1) hoặc nút "Chơi lại" (1.2.1)
      */
     public void startOrResetGame() {
-        if (model.getState() == GameState.GAME_OVER || model.getState() == GameState.MENU) {
-            model.reset();
-            canSoftDrop = true;
 
+        // ===== BẮT ĐẦU KHUNG KIỂM TRA RẼ NHÁNH (ALT) =====
+
+        // [[1.3.1. model.state == GameState.PLAYING]]
+        if (model.getState() == GameState.PLAYING) {
+            // 1.3.2. Bỏ qua thao tác (Không làm gì cả)
+            // 1.3.3. Duy trì trạng thái PLAYING hiện tại
+            return;
+        }
+
+        // [[1.1.0. model.state != GameState.PLAYING]] (MENU hoặc GAME_OVER)
+        else {
+            // 1.1.2. resetScore() -> Yêu cầu Model đặt lại điểm số về 0
+            model.resetScore();
+
+            // 1.1.3. setLevel(1) -> Yêu cầu Model đặt cấp độ về 1 (Đồng thời kích hoạt 1.1.4 phía trong)
+            model.setLevel(1);
+
+            // updateLevelUI(1) -> Controller chủ động bảo View cập nhật số "1" lên màn hình UI
+            view.updateLevelUI(1);
+
+            // 1.1.5. spawnNewPiece() -> Sinh ngẫu nhiên khối gạch hiện tại và khối tiếp theo
+            model.spawnNewPiece();
+
+            // startGame() -> Gọi hàm nội bộ để chuẩn bị luồng gạch rơi theo Class Diagram
+            startGame();
+
+            // 1.1.6. setDelayForLevel1() -> Thiết lập nhịp delay mặc định của Level 1 (500ms)
             if (gameTimer != null) {
-                gameTimer.stop();
+                gameTimer.setDelay(500);
+                // start() -> Khởi động Timer bắt đầu vòng lặp rơi tự động
+                gameTimer.start();
             }
 
-            startGame();
+            // 1.1.7. Cập nhật trạng thái hệ thống: state = GameState.PLAYING
+            model.setGameState(GameState.PLAYING);
+
+            // refresh() -> Cập nhật/vẽ lại toàn bộ giao diện đồ họa trò chơi
             view.refresh();
         }
     }
