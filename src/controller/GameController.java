@@ -104,11 +104,15 @@ public class GameController {
             if (!fullLines.isEmpty()) {
                 board.clearAndShift(fullLines);
                 model.updateScore(fullLines.size());
+                if (fullLines.size() >= 2) {
+                    soundManager.playSFX("src/audio/combo.wav");
+                }
 
             } else{
-                // Nếu không có dòng nào bị xóa, reset combo về -1 (chưa có chuỗi nào)
+                // Nếu không có dòng nào bị xóa, reset combo về mặc định
                 model.resetCombo();
             }
+
 
             model.spawnNewPiece();
             canSoftDrop = false;
