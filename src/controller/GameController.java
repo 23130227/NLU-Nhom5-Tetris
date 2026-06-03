@@ -9,6 +9,7 @@ import view.GameGUI;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
 import java.util.List;
 import javax.swing.Timer;
 
@@ -102,12 +103,40 @@ public class GameController {
 
             java.util.List<Integer> fullLines = board.scanFullLines();
             if (!fullLines.isEmpty()) {
-                board.clearAndShift(fullLines);
-                model.updateScore(fullLines.size());
-                if (fullLines.size() >= 2) {
+                System.out.println("aaa");
+                board.setClearingLines(fullLines);
+                view.refresh();
+                pauseGame();
+                Timer blinkTimer = new Timer(100, null);
+
+                blinkTimer.addActionListener(new ActionListener() {
+                    int count = 0;
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+
+                        view.refresh(); // repaint liên tục
+
+                        count++;
+
+                        if (count >= 6) { // nhấp nháy 6 lần
+                            board.clearAndShift(fullLines);
+                            board.setClearingLines(new ArrayList<>());
+                            model.updateScore(fullLines.size());
+                            model.spawnNewPiece();
+                            view.refresh();
+                            startGame();
+                            blinkTimer.stop();
+                        }
+                    }
+                });
+                System.out.println("Timer Started");
+                blinkTimer.start();
+                if (fullLines.size() == 1) {
+                    soundManager.playSFX("src/audio/single.wav");
+                } else if (fullLines.size() >= 2) {
                     soundManager.playSFX("src/audio/combo.wav");
                 }
-
+                return;
             } else{
                 // Nếu không có dòng nào bị xóa, reset combo về mặc định
                 model.resetCombo();
@@ -260,8 +289,43 @@ public class GameController {
 
         List<Integer> fullLines = board.scanFullLines();
         if (!fullLines.isEmpty()) {
-            board.clearAndShift(fullLines);
-            model.updateScore(fullLines.size());
+            board.setClearingLines(fullLines);
+            pauseGame();
+            Timer blinkTimer = new Timer(100, null);
+
+            blinkTimer.addActionListener(new ActionListener() {
+
+                int count = 0;
+
+                @Override
+                public void actionPerformed(ActionEvent e) {
+
+                    view.refresh();
+
+                    count++;
+
+                    if(count >= 6) {
+
+                        board.clearAndShift(fullLines);
+                        board.setClearingLines(new ArrayList<>());
+
+                        model.updateScore(fullLines.size());
+                        model.spawnNewPiece();
+
+                        view.refresh();
+                        startGame();
+                        ((Timer)e.getSource()).stop();
+                    }
+                }
+            });
+
+            blinkTimer.start();
+            if (fullLines.size() == 1) {
+                soundManager.playSFX("src/audio/single.wav");
+            } else if (fullLines.size() >= 2) {
+                soundManager.playSFX("src/audio/combo.wav");
+            }
+            return;
         } else{
             // Nếu không có dòng nào bị xóa, reset combo về -1 (chưa có chuỗi nào)
             model.resetCombo();
