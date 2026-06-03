@@ -177,9 +177,7 @@ public class GameGUI {
 
         JOptionPane.showMessageDialog(mainFrame, leaderboard.toString(), "Bảng Vàng Kỷ Lục", JOptionPane.INFORMATION_MESSAGE);
 
-        //  Reset game
-        model.reset();
-        refresh();
+
     }
 
 

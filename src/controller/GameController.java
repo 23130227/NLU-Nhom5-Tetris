@@ -84,9 +84,11 @@ public class GameController {
         if (model.getState() == GameState.GAME_OVER) {
             pauseGame();
             // lưu điểm đạt được vào file
-            model.saveCurrentScoreToFile();
-
             view.showGameOver();
+
+            model.reset();
+            view.refresh();
+            startGame();
             return;
         }
 
