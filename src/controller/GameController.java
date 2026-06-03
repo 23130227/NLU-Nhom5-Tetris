@@ -217,11 +217,56 @@ public class GameController {
      */
     public void rotatePiece() {
         Tetromino current = model.getCurrentPiece();
+        // Chỉ xử lý xoay khi game đang chơi bình thường
+        if (current == null || model.getState() != GameState.PLAYING) {
+            return;
+        }
+
         // Cứ xoay bừa đi đã...
         current.rotate();
 
-        // ...rồi hỏi Board xem xoay xong có bị kẹt vào tường/gạch khác không?
-        if (!model.getBoard().isValidMove(current, current.getX(), current.getY())) {
+        // Lấy tọa độ gốc trước khi xoay để làm mốc thử nghiệm dịch chuyển
+        int originalX = current.getX();
+        int originalY = current.getY();
+
+        // Kiểm tra xem vị trí mặc định tại chỗ sau khi xoay có hợp lệ không?
+        if (model.getBoard().isValidMove(current, originalX, originalY)) {
+            // Vị trí trống trải, xoay thành công ngay tại chỗ, cập nhật UI và kết thúc luôn
+            view.refresh();
+            return;
+        }
+
+        // THUẬT TOÁN WALL KICK (Giải quyết Pain Point kẹt tường/gạch)
+        // Định nghĩa các khoảng dịch chuyển thử nghiệm (Mảng Offsets: {Dịch X, Dịch Y})
+        int[][] kickOffsets = {
+                {-1, 0},  // Thử đẩy khối sang trái 1 ô (Cứu nguy khi kẹt sát tường bên phải)
+                {1, 0},   // Thử đẩy khối sang phải 1 ô (Cứu nguy khi kẹt sát tường bên trái)
+                {-2, 0},  // Thử đẩy khối sang trái 2 ô (Đặc biệt cần thiết cho khối dài chữ I)
+                {2, 0},   // Thử đẩy khối sang phải 2 ô (Cho khối chữ I kẹt tường trái)
+                {0, -1},  // Thử nhấc khối lên trên 1 ô (Cứu nguy khi xoay sát đống gạch cũ ở đáy)
+                {-1, -1}, // Thử dịch trái 1 ô và nhấc lên 1 ô
+                {1, -1}   // Thử dịch phải 1 ô và nhấc lên 1 ô
+        };
+
+        boolean kickSuccess = false;
+
+        // Duyệt qua từng phương án dịch biên xem phương án nào thỏa mãn lưới Board trống
+        for (int[] offset : kickOffsets) {
+            int testX = originalX + offset[0];
+            int testY = originalY + offset[1];
+
+            // ...rồi hỏi Board xem xoay xong có bị kẹt vào tường/gạch khác không?
+            if (model.getBoard().isValidMove(current, testX, testY)) {
+                // Tìm thấy vị trí trống cứu vãn hợp lệ! Áp dụng tọa độ mới cho khối gạch
+                current.setX(testX);
+                current.setY(testY);
+                kickSuccess = true;
+                break; // Thoát vòng lặp ngay khi tìm được phương án hợp lệ đầu tiên
+            }
+        }
+
+        // HOÀN TÁC (Undo): Nếu đã thử hết mọi cách đẩy tường mà vẫn kẹt, bắt buộc phải hủy xoay
+        if (!kickSuccess) {
             // BỊ KẸT RỒI! Phải xoay ngược lại.
             // Vì hàm rotate của bạn xoay 90 độ, nên xoay thêm 3 lần nữa (270 độ) sẽ về chỗ cũ!
             current.rotate();
