@@ -1,6 +1,7 @@
 package view;
 
 import model.GameModel;
+import model.GameState;
 import model.Tetromino;
 
 import javax.swing.*;
@@ -26,7 +27,7 @@ public class SidePanel extends JPanel {
     private GameModel model;
     private static final int PIXELS_SIZE = 20;
 
-    public  SidePanel(GameModel model) {
+    public SidePanel(GameModel model) {
         this.model = model;
         setPreferredSize(new Dimension(280, 600));
 
@@ -46,27 +47,29 @@ public class SidePanel extends JPanel {
         g2.setColor(Color.DARK_GRAY);           // màu nền
         g2.fillRoundRect(10, 10, 260, 200, 20, 20);
         g2.setColor(Color.white);
-        g2.drawRoundRect(10, 10, 260, 200, 20 , 20);
+        g2.drawRoundRect(10, 10, 260, 200, 20, 20);
         drawStatus(g2);
 
         // ===== 2. HOLD BOX =====
         g2.setColor(Color.DARK_GRAY);
         g2.fillRoundRect(10, 230, 260, 150, 20, 20);
         g2.setColor(Color.white);
-        g2.drawRoundRect(10, 230, 260, 150, 20 , 20);
+        g2.drawRoundRect(10, 230, 260, 150, 20, 20);
         g2.setFont(new Font("Arial", Font.BOLD, 20));
         g2.drawString("HOLD", 95, 260);
-        drawHoldPiece(g2);
 
         // ===== 3. NEXT BOX =====
         g2.setColor(Color.DARK_GRAY);
         g2.fillRoundRect(10, 400, 260, 200, 20, 20);
         g2.setColor(Color.WHITE);
-        g2.drawRoundRect(10, 400, 260, 200, 20 , 20);
+        g2.drawRoundRect(10, 400, 260, 200, 20, 20);
         g2.setFont(new Font("Arial", Font.BOLD, 20));
         g2.drawString("NEXT", 95, 430);
-        drawNextPiece(g2);
 
+        if (model.getState() == GameState.PLAYING || model.getState() == GameState.PAUSED) {
+            drawHoldPiece(g2);
+            drawNextPiece(g2);
+        }
     }
 
     private void drawNextPiece(Graphics2D g2d) {
@@ -107,6 +110,7 @@ public class SidePanel extends JPanel {
         }
 
     }
+
     private void drawHoldPiece(Graphics2D g2d) {
         drawPreviewBox(g2d, 95, 300, model.getHoldPiece());
     }

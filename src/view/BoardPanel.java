@@ -1,6 +1,7 @@
 package view;
 
 import model.GameModel;
+import model.GameState;
 import model.Tetromino;
 
 import javax.swing.*;
@@ -63,10 +64,20 @@ public class BoardPanel extends JPanel {
 
         if (model == null || model.getBoard() == null) return;
 
-        drawGrid(g2);
-        if(model.getBoard().getClearingLines().isEmpty()) {
+        if (model.getState() == GameState.PLAYING || model.getState() == GameState.PAUSED) {
+            drawGrid(g2);
             drawGhostPiece(g2);
             drawCurrentPiece(g2);
+        }
+
+        if (model.getState() == GameState.PAUSED) {
+            g2.setColor(new Color(0, 0, 0, 150)); // Lớp phủ đen mờ
+            g2.fillRect(0, 0, getWidth(), getHeight());
+            g2.setColor(Color.WHITE);
+            g2.setFont(new Font("Segoe UI", Font.BOLD, 28));
+            g2.drawString("GAME PAUSED", 50, 250);
+            g2.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+            g2.drawString("Tùy chọn: P (Resume) | R (Restart) | E (Exit)", 20, 300);
         }
     }
 
