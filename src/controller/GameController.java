@@ -89,13 +89,13 @@ public class GameController {
      */
     public void gameLoop() {
         if (model.getState() == GameState.GAME_OVER) {
-            pauseGame();
-            // lưu điểm đạt được vào file
+            if (gameTimer != null && gameTimer.isRunning()) {
+                gameTimer.stop();
+            }
             view.showGameOver();
 
-            model.reset();
-            view.refresh();
-            startGame();
+            model.setGameState(GameState.MENU);
+            startOrResetGame();
             return;
         }
 
@@ -111,7 +111,11 @@ public class GameController {
             if (!fullLines.isEmpty()) {
                 board.setClearingLines(fullLines);
                 view.refresh();
-                pauseGame();
+
+                if (gameTimer != null) {
+                    gameTimer.stop();
+                }
+
                 Timer blinkTimer = new Timer(100, null);
 
                 blinkTimer.addActionListener(new ActionListener() {
@@ -129,7 +133,12 @@ public class GameController {
                             model.updateScore(fullLines.size());
                             model.spawnNewPiece();
                             view.refresh();
-                            startGame();
+
+                            model.setGameState(GameState.PLAYING);
+                            if (gameTimer != null) {
+                                gameTimer.start();
+                            }
+
                             blinkTimer.stop();
                         }
                     }
@@ -219,8 +228,8 @@ public class GameController {
             // 2.3.2. hidePauseMenu() -> Đóng lớp phủ tùy chọn trên UI
             view.hidePauseMenu();
             model.resetScore(); // Đặt lại Score về 0, resetCombo về mặc định
-            model.setLevel(0);  // Đặt Level về 0 (Hàm này của bạn đã tự gọi board.reset() xóa sạch lưới)
-            view.updateLevelUI(0); // Ép UI hiển thị lại số cấp độ ban đầu
+            model.setLevel(1);  // Đặt Level về 0 (Hàm này của bạn đã tự gọi board.reset() xóa sạch lưới)
+            view.updateLevelUI(1); // Ép UI hiển thị lại số cấp độ ban đầu
 
             // 2.3.3. Kết thúc trạng thái PAUSED [Gọi xử lý đưa về Menu chính của UC-03]
             model.setGameState(GameState.MENU);
@@ -436,6 +445,8 @@ public class GameController {
         return this.model;
     }
     public void hardDrop() {
+        if (model.getState() != GameState.PLAYING) return;
+
         Tetromino current = model.getCurrentPiece();
         Board board = model.getBoard();
         while(board.isValidMove(current, current.getX(), current.getY() + 1)) {
@@ -446,7 +457,11 @@ public class GameController {
         List<Integer> fullLines = board.scanFullLines();
         if (!fullLines.isEmpty()) {
             board.setClearingLines(fullLines);
-            pauseGame();
+
+            if (gameTimer != null) {
+                gameTimer.stop();
+            }
+
             Timer blinkTimer = new Timer(100, null);
 
             blinkTimer.addActionListener(new ActionListener() {
@@ -468,9 +483,13 @@ public class GameController {
                         model.updateScore(fullLines.size());
                         model.spawnNewPiece();
 
+                        model.setGameState(GameState.PLAYING);
+                        if (gameTimer != null) {
+                            gameTimer.start();
+                        }
+
                         view.refresh();
-                        startGame();
-                        ((Timer)e.getSource()).stop();
+                        blinkTimer.stop();
                     }
                 }
             });
