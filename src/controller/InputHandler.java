@@ -19,6 +19,16 @@ public class InputHandler extends KeyAdapter {
 
     /** Tham chiếu tới controller để điều khiển logic game (di chuyển/xoay/soft drop...). */
     private GameController controller;
+    /**
+     * Thời điểm lần nhấn phím DOWN gần nhất.
+     */
+    private long lastDownPressTime = 0;
+
+    /**
+     * Khoảng thời gian tối đa giữa 2 lần nhấn DOWN
+     * để được xem là Hard Drop (ms).
+     */
+    private static final long DOUBLE_TAP_DELAY = 250;
 
     /**
      * Khởi tạo InputHandler với {@link GameController} tương ứng.
@@ -60,7 +70,14 @@ public class InputHandler extends KeyAdapter {
                 break;
 
             case KeyEvent.VK_DOWN:
-                controller.moveDown();
+                long currentTime = System.currentTimeMillis();
+                if (currentTime - lastDownPressTime <= DOUBLE_TAP_DELAY) {
+                    controller.hardDrop();
+                    lastDownPressTime = 0;
+                } else {
+                    controller.moveDown();
+                    lastDownPressTime = currentTime;
+                }
                 break;
 
             case KeyEvent.VK_UP:

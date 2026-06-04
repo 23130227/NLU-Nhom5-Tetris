@@ -26,7 +26,8 @@ public class Board {
 
     /** Chiều cao của bảng (số hàng). Mặc định chuẩn Tetris là 20. */
     private int height;
-
+    /***/
+    private List<Integer> clearingLines = new ArrayList<>();
     /**
      * Khởi tạo bảng chơi mới với kích thước chuẩn 10 cột x 20 hàng.
      */
@@ -156,5 +157,13 @@ public class Board {
      */
     public void reset() {
         this.grid = new int[height][width];
+    }
+
+    public List<Integer> getClearingLines() {
+        return clearingLines;
+    }
+
+    public void setClearingLines(List<Integer> clearingLines) {
+        this.clearingLines = clearingLines;
     }
 }
