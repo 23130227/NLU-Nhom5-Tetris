@@ -64,7 +64,10 @@ public class BoardPanel extends JPanel {
         if (model == null || model.getBoard() == null) return;
 
         drawGrid(g2);
-        drawCurrentPiece(g2);
+        if(model.getBoard().getClearingLines().isEmpty()) {
+            drawGhostPiece(g2);
+            drawCurrentPiece(g2);
+        }
     }
 
     /**
@@ -77,11 +80,27 @@ public class BoardPanel extends JPanel {
         for(int row = 0; row < grid.length; row++) {
             for(int col = 0; col < grid[row].length; col++) {
                 int value = grid[row][col];
+                boolean isClearing = model.getBoard().getClearingLines().contains(row);
                 // Nếu ô này có chứa gạch (giá trị > 0)
                 if(value != 0) {
                     // Lấy lại màu gốc dựa vào giá trị lưu trong bảng (nhớ trừ đi 1)
                     Color originalColor = getColorByID(value - 1);
-                    drawSquare(g2, col * PIXELS_SIZE, row * PIXELS_SIZE, originalColor);
+                    if (isClearing) {
+
+                        // hiệu ứng blink: trắng → vàng
+                        long time = System.currentTimeMillis() / 100;
+
+                        if (time % 2 == 0) {
+                            drawSquare(g2, col * PIXELS_SIZE, row * PIXELS_SIZE, Color.WHITE);
+                        } else {
+                            drawSquare(g2, col * PIXELS_SIZE, row * PIXELS_SIZE, Color.YELLOW);
+                        }
+
+                    } else {
+
+                        drawSquare(g2, col * PIXELS_SIZE, row * PIXELS_SIZE, originalColor);
+                    }
+
                 }
             }
         }
@@ -149,6 +168,48 @@ public class BoardPanel extends JPanel {
             for (Point p : points) {
                 // Chỉ vẽ nếu khối đó có phần hiển thị nằm trong vùng vẽ hợp lệ của sân chơi
                 drawSquare(g2, p.x * PIXELS_SIZE, p.y * PIXELS_SIZE, color);
+            }
+        }
+    }
+
+    // NÂNG CẤP TÍNH NĂNG BÓNG GẠCH
+    /**
+     * Lấy khối gạch đang rơi, giả lập tọa độ xuống đáy bàn cờ và vẽ bóng mờ.
+     * @param g2 đối tượng đồ họa Graphics2D
+     */
+    private void drawGhostPiece(Graphics2D g2) {
+        Tetromino piece = model.getCurrentPiece();
+        if (piece != null) {
+            // 1. Lấy tọa độ Y của đáy bàn cờ đã tính toán từ Commit 4
+            int ghostY = model.getGhostY();
+
+            // Tọa độ X của khối gạch hiện tại giữ nguyên
+            int currentX = piece.getX();
+
+            // 2. Tạo màu mờ (Màu gốc của gạch nhưng thêm độ trong suốt alpha = 60)
+            Color baseColor = piece.getColor();
+            Color ghostColor = new Color(baseColor.getRed(), baseColor.getGreen(), baseColor.getBlue(), 60);
+
+            // 3. Lấy danh sách các ô vuông cấu thành nên khối gạch dựa theo tọa độ giả lập (currentX, ghostY)
+            // Phương thức getCoordinates(x, y) đã được bạn Pháp viết sẵn trong lớp Tetromino
+            java.util.List<Point> points = piece.getCoordinates(currentX, ghostY);
+
+            for (Point p : points) {
+                // Chỉ vẽ nếu ô nằm trong vùng hiển thị của sân chơi
+                if (p.y >= 0 && p.y < 20 && p.x >= 0 && p.x < 10) {
+                    int drawX = p.x * PIXELS_SIZE;
+                    int drawY = p.y * PIXELS_SIZE;
+                    int margin = 2;
+
+                    // Vẽ ô vuông mờ đại diện cho bóng
+                    g2.setColor(ghostColor);
+                    g2.fillRect(drawX + margin, drawY + margin, PIXELS_SIZE - margin * 2, PIXELS_SIZE - margin * 2);
+
+                    // Vẽ viền nét đứt hoặc viền mờ bao quanh để nhìn rõ hình dáng bóng gạch
+                    g2.setColor(new Color(baseColor.getRed(), baseColor.getGreen(), baseColor.getBlue(), 120));
+                    g2.setStroke(new BasicStroke(1f));
+                    g2.drawRect(drawX + 1, drawY + 1, PIXELS_SIZE - 2, PIXELS_SIZE - 2);
+                }
             }
         }
     }

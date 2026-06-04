@@ -58,33 +58,36 @@ public class GameModel {
 
     /**
      * Cập nhật điểm số dựa trên số dòng vừa ăn được.
-     * <p><i>Lưu ý: Hàm này hiện tại đang để trống (placeholder) chờ được implement.</i>
+     * LUẬT MỚI: Chỉ ăn từ 2 hàng trở lên mới được tính là Combo.
      *
      * @param lineCount số lượng dòng vừa bị xóa đi cùng lúc (thường là 1-4)
      */
     public void updateScore(int lineCount) {
         if (lineCount > 0) {
-            // 1. Tăng bộ đếm combo
-            comboCount++;
-
-            // 2. Điểm cơ bản (1 hàng = 100, 2 hàng = 300, 3 hàng = 500, 4 hàng = 800)
+            // 1. Điểm cơ bản (1 hàng = 100, 2 hàng = 300, 3 hàng = 500, 4 hàng = 800)
             int[] scoreTable = {0, 100, 300, 500, 800};
             int baseScore = scoreTable[lineCount];
 
-            // 3. Điểm thưởng Combo
-            // Công thức: 50 * số combo * cấp độ (level) hiện tại
             int comboBonus = 0;
-            if (comboCount > 0) {
-                // Sử dụng this.level mặc định bằng 1 nếu chưa tăng cấp, hoặc getLevel()
+
+            // 2. LUẬT MỚI: Chỉ khi ăn từ 2 hàng trở lên mới tăng Combo
+            if (lineCount >= 2) {
+                this.comboCount++; // Tăng chuỗi combo lên
+
                 int currentLevel = Math.max(1, this.level);
-                comboBonus = 50 * comboCount * currentLevel;
-                System.out.println("Combo x" + comboCount + "! Thưởng: " + comboBonus); // In ra console để test
+                comboBonus = 50 * this.comboCount * currentLevel;
+
+                System.out.println("=> COMBO x" + this.comboCount + " KÍCH HOẠT! Thưởng Combo: +" + comboBonus);
+            } else {
+                // Nếu lượt này chỉ ăn 1 hàng đơn lẻ -> Bị đứt chuỗi Combo cũ, đưa về 0
+                resetCombo();
+                System.out.println("=> Xóa 1 hàng đơn lẻ (Không có thưởng Combo)");
             }
 
-            // 4. Cộng tổng điểm
+            // 3. Cộng tổng điểm
             this.score += (baseScore + comboBonus);
 
-            // 5. Tăng level mỗi khi đạt 1000 điểm
+            // 4. Tăng level mỗi khi đạt 1000 điểm
             this.level = (this.score / 1000) + 1;
         }
     }
@@ -93,7 +96,7 @@ public class GameModel {
      * Được gọi khi người chơi thả một khối mà không ăn được hàng nào.
      */
     public void resetCombo() {
-        this.comboCount = -1;
+        this.comboCount = 0;
     }
 
     /**
@@ -112,14 +115,24 @@ public class GameModel {
      */
     public void spawnNewPiece() {
         Random rand = new Random();
-        // randomId từ 0 đến 6 tương ứng với 7 loại khối Tetromino (I, J, L, O, S, T, Z)
-        int randomId = rand.nextInt(7);
-        this.currentPiece = new Tetromino(randomId);
 
-        // Kiểm tra xem vị trí sinh ra có bị đụng gạch cũ không
+        // 1. Nếu là lần đầu tiên chạy game (nextPiece chưa có gì), random viên đầu tiên
+        if (this.nextPiece == null) {
+            this.nextPiece = new Tetromino(rand.nextInt(7));
+        }
+
+        // 2. Lấy viên gạch tiếp theo ra làm viên gạch hiện tại đang rơi
+        this.currentPiece = this.nextPiece;
+
+        // 3. Random ra trước viên gạch tiếp theo (dành cho lượt sau)
+        int randomId = rand.nextInt(7);
+        this.nextPiece = new Tetromino(randomId);
+
+        // Kiểm tra xem vị trí sinh ra có bị đụng gạch cũ không (Game Over)
         if (!board.isValidMove(currentPiece, currentPiece.getX(), currentPiece.getY())) {
             setGameOver();
         }
+
         // Khi một khối gạch mới hoàn toàn xuất hiện, mở lại quyền sử dụng tính năng Hold
         this.canHold = true;
     }
@@ -235,21 +248,58 @@ public class GameModel {
         board.reset();
         score = 0;
         level = 1;
-        comboCount = -1; // Thêm dòng này để reset combo khi chơi lại
+        comboCount = 0; // Thêm dòng này để reset combo khi chơi lại
         state = GameState.PLAYING;
+        this.nextPiece = null;
         spawnNewPiece();
     }
     /**
      * Hàm ghi điểm cao nhất cảu người chơi vào file.
      */
     public void saveCurrentScoreToFile() {
-        saveHighscore("Player", this.score);
+    }
+    public void saveHighscore(String over, int finalScore) {
+        if (over == null || over.trim().isEmpty()) {
+            over = "Player";
+        }
+
+        java.util.List<String> records = loadScoresFromFile();
+        records.add(over.trim() + ":" + finalScore);
+
+        // Sắp xếp danh sách giảm dần theo điểm số
+        java.util.Collections.sort(records, new java.util.Comparator<String>() {
+            @Override
+            public int compare(String o1, String o2) {
+                int score1 = Integer.parseInt(o1.split(":")[1]);
+                int score2 = Integer.parseInt(o2.split(":")[1]);
+                return Integer.compare(score2, score1);
+            }
+        });
+
+        // Cắt bớt nếu vượt quá số lượng tối đa của nhóm (Top 10)
+        if (records.size() > 10) {
+            records = records.subList(0, 10);
+        }
+
+        // Ghi ngược dữ liệu xuống file txt
+        try (java.io.BufferedWriter writer = new java.io.BufferedWriter(new java.io.FileWriter("highscore.txt"))) {
+            for (String record : records) {
+                writer.write(record + "\n");
+            }
+        } catch (java.io.IOException e) {
+            System.err.println("Lỗi khi ghi file Highscore: " + e.getMessage());
+        }
     }
 
+    // Hàm đọc danh sách điểm từ file txt lên hệ thống
     public java.util.List<String> loadScoresFromFile() {
         java.util.List<String> records = new java.util.ArrayList<>();
         java.io.File file = new java.io.File("highscore.txt");
-        if (!file.exists()) return records;
+
+        if (!file.exists()) {
+            return records;
+        }
+
         try (java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.FileReader(file))) {
             String line;
             while ((line = reader.readLine()) != null) {
@@ -258,36 +308,32 @@ public class GameModel {
                 }
             }
         } catch (java.io.IOException e) {
-            System.err.println("Lỗi đọc file: " + e.getMessage());
+            System.err.println("Lỗi khi đọc file Highscore: " + e.getMessage());
         }
         return records;
     }
+    // NÂNG CẤP TÍNH NĂNG BÓNG GẠCH
     /**
-     * Hàm lưu top 10 điểm cao nhất của người chơi vào file.
+     * Thuật toán tìm tọa độ Y thấp nhất mà khối gạch hiện tại có thể rơi xuống (vị trí của bóng gạch).
+     * Hàm này duyệt từ vị trí Y hiện tại, tăng dần cho tới khi va chạm.
+     * * @return tọa độ Y sâu nhất hợp lệ dưới đáy bàn cờ
      */
-    public void saveHighscore(String over, int finalScore) {
-        if (over == null || over.trim().isEmpty()) over = "Player";
-        java.util.List<String> records = loadScoresFromFile();
-        records.add(over.trim() + ":" + finalScore);
-        java.util.Collections.sort(records, new java.util.Comparator<String>() {
-            @Override
-            public int compare(String o1, String o2) {
-                return Integer.compare(Integer.parseInt(o2.split(":")[1]), Integer.parseInt(o1.split(":")[1]));
-            }
-        });
-        if (records.size() > 10) records = records.subList(0, 10); // Giữ Top 10 của nhóm
-        try (java.io.BufferedWriter writer = new java.io.BufferedWriter(new java.io.FileWriter("highscore.txt"))) {
-            for (String record : records) {
-                writer.write(record + "\n");
-            }
-        } catch (java.io.IOException e) {
-            System.err.println("Lỗi ghi file: " + e.getMessage());
+    public int getGhostY() {
+        if (currentPiece == null) {
+            return 0;
         }
+
+        // Bắt đầu từ tọa độ Y hiện tại của khối gạch đang rơi
+        int ghostY = currentPiece.getY();
+
+        // Vòng lặp thử đi xuống: Nếu ô tiếp theo (ghostY + 1) vẫn trống và hợp lệ thì đi xuống tiếp
+        while (board.isValidMove(currentPiece, currentPiece.getX(), ghostY + 1)) {
+            ghostY++;
+        }
+
+        // Trả về tọa độ Y sâu nhất tìm được để lớp View sử dụng để vẽ bóng
+        return ghostY;
     }
-
-
-
-
     /**
      * Hàm main dùng để test (kiểm thử) hoạt động của GameModel.
      * Chạy độc lập không cần giao diện.
@@ -308,4 +354,5 @@ public class GameModel {
         System.out.println("Tọa độ xuất phát:");
         piece.printCoords();
     }
+
 }

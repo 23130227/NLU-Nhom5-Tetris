@@ -19,6 +19,16 @@ public class InputHandler extends KeyAdapter {
 
     /** Tham chiếu tới controller để điều khiển logic game (di chuyển/xoay/soft drop...). */
     private GameController controller;
+    /**
+     * Thời điểm lần nhấn phím DOWN gần nhất.
+     */
+    private long lastDownPressTime = 0;
+
+    /**
+     * Khoảng thời gian tối đa giữa 2 lần nhấn DOWN
+     * để được xem là Hard Drop (ms).
+     */
+    private static final long DOUBLE_TAP_DELAY = 250;
 
     /**
      * Khởi tạo InputHandler với {@link GameController} tương ứng.
@@ -71,6 +81,17 @@ public class InputHandler extends KeyAdapter {
                 controller.rotatePiece();
                 break;
 
+                // kich hoat tinh nang doi gach
+            case KeyEvent.VK_SHIFT:
+                controller.handleHoldPiece();
+                break;
+
+            case  KeyEvent.VK_M:
+                controller.toggleMusic();
+                break;
+            case KeyEvent.VK_H:
+                controller.hardDrop();
+                break;
             default:
                 // Các phím khác: bỏ qua
                 break;

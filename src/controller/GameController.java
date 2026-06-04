@@ -1,5 +1,6 @@
 package controller;
 
+import audio.SoundManager;
 import model.Board;
 import model.GameModel;
 import model.GameState;
@@ -8,6 +9,8 @@ import view.GameGUI;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
+import java.util.List;
 import javax.swing.Timer;
 
 /**
@@ -32,6 +35,8 @@ public class GameController {
     /** Tham chiếu đến View để hiển thị đồ họa. */
     private GameGUI view;
 
+    /** */
+    private SoundManager soundManager;
     /** * Cờ kiểm soát soft drop (rơi nhanh).
      * Giúp tránh việc khối mới vừa sinh ra đã rơi vèo xuống nếu người chơi giữ rịt phím DOWN.
      */
@@ -46,6 +51,7 @@ public class GameController {
     public GameController(GameModel model, GameGUI view) {
         this.model = model;
         this.view = view;
+        this.soundManager = new SoundManager();
     }
 
     /**
@@ -102,13 +108,44 @@ public class GameController {
 
             java.util.List<Integer> fullLines = board.scanFullLines();
             if (!fullLines.isEmpty()) {
-                board.clearAndShift(fullLines);
-                model.updateScore(fullLines.size());
+                board.setClearingLines(fullLines);
+                view.refresh();
+                pauseGame();
+                Timer blinkTimer = new Timer(100, null);
 
+                blinkTimer.addActionListener(new ActionListener() {
+                    int count = 0;
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+
+                        view.refresh(); // repaint liên tục
+
+                        count++;
+
+                        if (count >= 6) { // nhấp nháy 6 lần
+                            board.clearAndShift(fullLines);
+                            board.setClearingLines(new ArrayList<>());
+                            model.updateScore(fullLines.size());
+                            model.spawnNewPiece();
+                            view.refresh();
+                            startGame();
+                            blinkTimer.stop();
+                        }
+                    }
+                });
+                System.out.println("Timer Started");
+                blinkTimer.start();
+                if (fullLines.size() == 1) {
+                    soundManager.playSFX("src/audio/single.wav");
+                } else if (fullLines.size() >= 2) {
+                    soundManager.playSFX("src/audio/combo.wav");
+                }
+                return;
             } else{
-                // Nếu không có dòng nào bị xóa, reset combo về -1 (chưa có chuỗi nào)
+                // Nếu không có dòng nào bị xóa, reset combo về mặc định
                 model.resetCombo();
             }
+
 
             model.spawnNewPiece();
             canSoftDrop = false;
@@ -184,6 +221,20 @@ public class GameController {
         }
     }
 
+    /** Xử lý tính năng Hold: Đổi khối hiện tại với khối đang giữ trong ô Hold.
+     * * <p>Chỉ cho phép đổi nếu game đang ở trạng thái PLAYING và cờ Hold chưa bị khóa.
+     * Sau khi đổi thành công, yêu cầu giao diện vẽ lại ngay lập tức.
+     */
+    public void handleHoldPiece() {
+        // Chỉ cho phép đổi gạch khi game đang ở trạng thái chơi (PLAYING)
+        if (model.getState() == GameState.PLAYING) {
+            model.holdCurrentPiece();
+
+            // Sau khi đổi gạch thành công, yêu cầu giao diện vẽ lại ngay lập tức
+            view.refresh();
+        }
+    }
+
     /**
      * Đặt lại trạng thái cho phép rơi nhanh.
      * Thường được gọi khi người chơi nhả phím DOWN.
@@ -200,11 +251,56 @@ public class GameController {
      */
     public void rotatePiece() {
         Tetromino current = model.getCurrentPiece();
+        // Chỉ xử lý xoay khi game đang chơi bình thường
+        if (current == null || model.getState() != GameState.PLAYING) {
+            return;
+        }
+
         // Cứ xoay bừa đi đã...
         current.rotate();
 
-        // ...rồi hỏi Board xem xoay xong có bị kẹt vào tường/gạch khác không?
-        if (!model.getBoard().isValidMove(current, current.getX(), current.getY())) {
+        // Lấy tọa độ gốc trước khi xoay để làm mốc thử nghiệm dịch chuyển
+        int originalX = current.getX();
+        int originalY = current.getY();
+
+        // Kiểm tra xem vị trí mặc định tại chỗ sau khi xoay có hợp lệ không?
+        if (model.getBoard().isValidMove(current, originalX, originalY)) {
+            // Vị trí trống trải, xoay thành công ngay tại chỗ, cập nhật UI và kết thúc luôn
+            view.refresh();
+            return;
+        }
+
+        // THUẬT TOÁN WALL KICK (Giải quyết Pain Point kẹt tường/gạch)
+        // Định nghĩa các khoảng dịch chuyển thử nghiệm (Mảng Offsets: {Dịch X, Dịch Y})
+        int[][] kickOffsets = {
+                {-1, 0},  // Thử đẩy khối sang trái 1 ô (Cứu nguy khi kẹt sát tường bên phải)
+                {1, 0},   // Thử đẩy khối sang phải 1 ô (Cứu nguy khi kẹt sát tường bên trái)
+                {-2, 0},  // Thử đẩy khối sang trái 2 ô (Đặc biệt cần thiết cho khối dài chữ I)
+                {2, 0},   // Thử đẩy khối sang phải 2 ô (Cho khối chữ I kẹt tường trái)
+                {0, -1},  // Thử nhấc khối lên trên 1 ô (Cứu nguy khi xoay sát đống gạch cũ ở đáy)
+                {-1, -1}, // Thử dịch trái 1 ô và nhấc lên 1 ô
+                {1, -1}   // Thử dịch phải 1 ô và nhấc lên 1 ô
+        };
+
+        boolean kickSuccess = false;
+
+        // Duyệt qua từng phương án dịch biên xem phương án nào thỏa mãn lưới Board trống
+        for (int[] offset : kickOffsets) {
+            int testX = originalX + offset[0];
+            int testY = originalY + offset[1];
+
+            // ...rồi hỏi Board xem xoay xong có bị kẹt vào tường/gạch khác không?
+            if (model.getBoard().isValidMove(current, testX, testY)) {
+                // Tìm thấy vị trí trống cứu vãn hợp lệ! Áp dụng tọa độ mới cho khối gạch
+                current.setX(testX);
+                current.setY(testY);
+                kickSuccess = true;
+                break; // Thoát vòng lặp ngay khi tìm được phương án hợp lệ đầu tiên
+            }
+        }
+
+        // HOÀN TÁC (Undo): Nếu đã thử hết mọi cách đẩy tường mà vẫn kẹt, bắt buộc phải hủy xoay
+        if (!kickSuccess) {
             // BỊ KẸT RỒI! Phải xoay ngược lại.
             // Vì hàm rotate của bạn xoay 90 độ, nên xoay thêm 3 lần nữa (270 độ) sẽ về chỗ cũ!
             current.rotate();
@@ -213,5 +309,77 @@ public class GameController {
         }
         view.refresh();
     }
+    /**
+     * Bật hoặc tắt nhạc nền trong game.
+     *
+     * <p>Phương thức hoạt động theo cơ chế Toggle:
+     * <ul>
+     *     <li>Nếu nhạc chưa phát → bắt đầu phát.</li>
+     *     <li>Nếu nhạc đang phát → dừng phát.</li>
+     * </ul>
+     *
+     * <p>Hàm này thường được gọi khi người chơi nhấn phím M.
+     */
+    public void toggleMusic() {
+        if (!soundManager.isMusicPlaying()) {
+            soundManager.play("src/audio/Tetris.wav");
+        } else {
+            soundManager.stopMusic();
+        }
+    }
 
+    public void hardDrop() {
+        Tetromino current = model.getCurrentPiece();
+        Board board = model.getBoard();
+        while(board.isValidMove(current, current.getX(), current.getY() + 1)) {
+            current.move(0, 1);
+        }
+        board.lockPiece(current);
+
+        List<Integer> fullLines = board.scanFullLines();
+        if (!fullLines.isEmpty()) {
+            board.setClearingLines(fullLines);
+            pauseGame();
+            Timer blinkTimer = new Timer(100, null);
+
+            blinkTimer.addActionListener(new ActionListener() {
+
+                int count = 0;
+
+                @Override
+                public void actionPerformed(ActionEvent e) {
+
+                    view.refresh();
+
+                    count++;
+
+                    if(count >= 6) {
+
+                        board.clearAndShift(fullLines);
+                        board.setClearingLines(new ArrayList<>());
+
+                        model.updateScore(fullLines.size());
+                        model.spawnNewPiece();
+
+                        view.refresh();
+                        startGame();
+                        ((Timer)e.getSource()).stop();
+                    }
+                }
+            });
+
+            blinkTimer.start();
+            if (fullLines.size() == 1) {
+                soundManager.playSFX("src/audio/single.wav");
+            } else if (fullLines.size() >= 2) {
+                soundManager.playSFX("src/audio/combo.wav");
+            }
+            return;
+        } else{
+            // Nếu không có dòng nào bị xóa, reset combo về -1 (chưa có chuỗi nào)
+            model.resetCombo();
+        }
+        model.spawnNewPiece();
+        view.refresh();
+    }
 }

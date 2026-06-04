@@ -142,46 +142,46 @@ public class GameGUI {
         boardPanel.repaint(); // Yêu cầu BoardPanel vẽ lại
 
         // TODO: Mở comment dòng này khi class SidePanel được hoàn thiện
-       sidePanel.repaint();
+      sidePanel.repaint();
     }
-
     /**
      * Hiển thị hộp thoại thông báo khi trò chơi kết thúc (Game Over).
      * Yêu cầu người chơi nhập tên để lưu điểm số.
      */
     public void showGameOver(){
+    String over = JOptionPane.showInputDialog(mainFrame, "Game Over!\nScore:" + model.getScore() +
+            "\nEnter your name:", "Game Over", JOptionPane.INFORMATION_MESSAGE);
 
-        String over = JOptionPane.showInputDialog(mainFrame, "Game Over!\nScore:" + model.getScore() +
-                "\nEnter your name:", "Game Over", JOptionPane.INFORMATION_MESSAGE);
-
-        // Gọi Model lưu trữ dữ liệu
-        int finalScore = model.getScore();
+    // Gọi Model lưu trữ dữ liệu
+    int finalScore = model.getScore();
         model.saveHighscore(over, finalScore);
 
-        //  Đọc dữ liệu Top 10 và build  hiển thị bảng xếp hạng
-        java.util.List<String> topScores = model.loadScoresFromFile();
-        StringBuilder leaderboard = new StringBuilder();
+    //  Đọc dữ liệu Top 10 và build  hiển thị bảng xếp hạng
+    java.util.List<String> topScores = model.loadScoresFromFile();
+    StringBuilder leaderboard = new StringBuilder();
         leaderboard.append("🏆 BẢNG XẾP HẠNG TOP 10 ĐIỂM CAO 🏆\n");
         leaderboard.append("=========================================\n");
 
         if (topScores.isEmpty()) {
-            leaderboard.append("Chưa có kỷ lục nào.\n");
-        } else {
-            for (int i = 0; i < topScores.size(); i++) {
-                String[] parts = topScores.get(i).split(":");
-                leaderboard.append(" Hạng ").append(i + 1).append(":\t").append(parts[0]).append("\t- ").append(parts[1]).append(" điểm\n");
-            }
+        leaderboard.append("Chưa có kỷ lục nào.\n");
+    } else {
+        for (int i = 0; i < topScores.size(); i++) {
+            String[] parts = topScores.get(i).split(":");
+            leaderboard.append(" Hạng ").append(i + 1).append(":\t").append(parts[0]).append("\t- ").append(parts[1]).append(" điểm\n");
         }
+    }
         leaderboard.append("=========================================\n");
         leaderboard.append("Nhấn OK để chơi trận mới!");
 
         JOptionPane.showMessageDialog(mainFrame, leaderboard.toString(), "Bảng Vàng Kỷ Lục", JOptionPane.INFORMATION_MESSAGE);
 
 
-    }
+}
 
 
-    /**
+
+
+/**
      * Lấy tham chiếu đến cửa sổ chính của game.
      *
      * @return cửa sổ {@link JFrame} chính
