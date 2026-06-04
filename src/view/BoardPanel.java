@@ -64,8 +64,10 @@ public class BoardPanel extends JPanel {
         if (model == null || model.getBoard() == null) return;
 
         drawGrid(g2);
-        drawGhostPiece(g2);
-        drawCurrentPiece(g2);
+        if(model.getBoard().getClearingLines().isEmpty()) {
+            drawGhostPiece(g2);
+            drawCurrentPiece(g2);
+        }
     }
 
     /**
@@ -78,11 +80,27 @@ public class BoardPanel extends JPanel {
         for(int row = 0; row < grid.length; row++) {
             for(int col = 0; col < grid[row].length; col++) {
                 int value = grid[row][col];
+                boolean isClearing = model.getBoard().getClearingLines().contains(row);
                 // Nếu ô này có chứa gạch (giá trị > 0)
                 if(value != 0) {
                     // Lấy lại màu gốc dựa vào giá trị lưu trong bảng (nhớ trừ đi 1)
                     Color originalColor = getColorByID(value - 1);
-                    drawSquare(g2, col * PIXELS_SIZE, row * PIXELS_SIZE, originalColor);
+                    if (isClearing) {
+
+                        // hiệu ứng blink: trắng → vàng
+                        long time = System.currentTimeMillis() / 100;
+
+                        if (time % 2 == 0) {
+                            drawSquare(g2, col * PIXELS_SIZE, row * PIXELS_SIZE, Color.WHITE);
+                        } else {
+                            drawSquare(g2, col * PIXELS_SIZE, row * PIXELS_SIZE, Color.YELLOW);
+                        }
+
+                    } else {
+
+                        drawSquare(g2, col * PIXELS_SIZE, row * PIXELS_SIZE, originalColor);
+                    }
+
                 }
             }
         }
