@@ -70,14 +70,7 @@ public class InputHandler extends KeyAdapter {
                 break;
 
             case KeyEvent.VK_DOWN:
-                long currentTime = System.currentTimeMillis();
-                if (currentTime - lastDownPressTime <= DOUBLE_TAP_DELAY) {
-                    controller.hardDrop();
-                    lastDownPressTime = 0;
-                } else {
-                    controller.moveDown();
-                    lastDownPressTime = currentTime;
-                }
+                controller.moveDown();
                 break;
 
             case KeyEvent.VK_UP:
@@ -95,6 +88,9 @@ public class InputHandler extends KeyAdapter {
 
             case  KeyEvent.VK_M:
                 controller.toggleMusic();
+                break;
+            case KeyEvent.VK_H:
+                controller.hardDrop();
                 break;
             default:
                 // Các phím khác: bỏ qua
