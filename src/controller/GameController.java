@@ -103,7 +103,6 @@ public class GameController {
 
             java.util.List<Integer> fullLines = board.scanFullLines();
             if (!fullLines.isEmpty()) {
-                System.out.println("aaa");
                 board.setClearingLines(fullLines);
                 view.refresh();
                 pauseGame();
