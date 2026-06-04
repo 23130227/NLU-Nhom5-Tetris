@@ -36,12 +36,9 @@ public class GameGUI {
     /** Nút bấm để bắt đầu trò chơi. */
     private JButton startBtn;
 
-    /**
-     * Khởi tạo Giao diện người dùng (GUI) cho game.
-     * Thiết lập các Panel, trang trí chữ, đổ bóng và sắp xếp chúng vào cửa sổ chính.
-     *
-     * @param model dữ liệu game để truyền cho các panel con hiển thị
-     */
+    // Thuộc tính theo dõi hiển thị màn hình lớp phủ Tạm dừng
+    private boolean isPauseMenuVisible = false;
+
     public GameGUI(GameModel model) {
         this.model = model;
         this.mainFrame = new JFrame("Tetris");
@@ -126,18 +123,45 @@ public class GameGUI {
         // Cấu hình Cửa sổ chính
         mainFrame.add(mainContainer);
         mainFrame.getContentPane().setBackground(Color.BLACK);
-        mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); // Thoát chương trình khi đóng cửa sổ
-        mainFrame.setResizable(false);                            // Không cho phép thay đổi kích thước cửa sổ
-        mainFrame.pack();                                         // Tự động điều chỉnh kích thước cho vừa các thành phần bên trong
-        mainFrame.setLocationRelativeTo(null);                    // Hiển thị ở giữa màn hình
-        mainFrame.setVisible(true);                               // Hiển thị cửa sổ
+        mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        mainFrame.setResizable(false);
+        mainFrame.pack();
+        mainFrame.setLocationRelativeTo(null);
+        mainFrame.setVisible(true);
     }
 
     /**
-     * Cập nhật lại giao diện đồ họa.
-     * Hàm này thường được gọi từ GameController sau mỗi lần gạch rơi hoặc di chuyển
-     * để vẽ lại trạng thái mới nhất của trò chơi.
+     * [UC-02 - Bước 2.1.4 / 2.4.3]: Kích hoạt hiển thị Menu tạm dừng
      */
+    public void showPauseMenu() {
+        this.isPauseMenuVisible = true;
+        // Thầy cô yêu cầu giao diện vẽ lớp phủ chứa thông tin chữ và 3 lựa chọn
+        refresh();
+    }
+
+    /**
+     * [UC-02 - Bước 2.1.6 / 2.2.2 / 2.3.2]: Gỡ bỏ màn hình lớp phủ tạm dừng
+     */
+    public void hidePauseMenu() {
+        this.isPauseMenuVisible = false;
+        refresh();
+    }
+
+    /**
+     * [UC-02 - Bước 2.3.3]: Hiển thị lại màn hình Menu chính (Main Menu) xóa sạch trận đấu
+     */
+    public void showMainMenu() {
+        this.isPauseMenuVisible = false;
+        JOptionPane.showMessageDialog(mainFrame, "Đã thoát ván đấu. Trở về màn hình MENU chính!");
+        refresh();
+    }
+
+    public void updateLevelUI(int level) {
+        if (sidePanel != null) {
+            sidePanel.repaint();
+        }
+    }
+
     public void refresh(){
         boardPanel.repaint(); // Yêu cầu BoardPanel vẽ lại
 
@@ -198,4 +222,7 @@ public class GameGUI {
     public JButton getStartBtn() {
         return startBtn;
     }
+
+    public boolean isPauseMenuVisible() { return isPauseMenuVisible; }
+
 }

@@ -57,11 +57,35 @@ public class GameModel {
     }
 
     /**
-     * Cập nhật điểm số dựa trên số dòng vừa ăn được.
-     * LUẬT MỚI: Chỉ ăn từ 2 hàng trở lên mới được tính là Combo.
-     *
-     * @param lineCount số lượng dòng vừa bị xóa đi cùng lúc (thường là 1-4)
+     * [UC-01 - Bước 1.1.2] Đặt lại điểm số và combo về trạng thái ban đầu
      */
+    public void resetScore() {
+        this.score = 0;
+        this.comboCount = -1;
+    }
+
+    /**
+     * [UC-01 - Bước 1.1.3] Thiết lập cấp độ chơi về Level 1
+     */
+    public void setLevel(int level) {
+        this.level = level;
+
+        // [UC-01 - Bước 1.1.4] Model tự động gửi thông điệp dọn sạch ma trận lưới sang Board
+        this.board.reset();
+
+        // Dọn dẹp bổ sung tài nguyên gạch cũ
+        this.nextPiece = null;
+        this.holdPiece = null;
+        this.canHold = true;
+    }
+
+    /**
+     * [UC-01 - Bước 1.1.7] Cập nhật trạng thái hoạt động toàn cục của Game
+     */
+    public void setGameState(GameState state) {
+        this.state = state;
+    }
+
     public void updateScore(int lineCount) {
         if (lineCount > 0) {
             // 1. Điểm cơ bản (1 hàng = 100, 2 hàng = 300, 3 hàng = 500, 4 hàng = 800)
@@ -238,20 +262,6 @@ public class GameModel {
      */
     public void setGameOver(){
         this.state = GameState.GAME_OVER;
-    }
-
-    /**
-     * Đặt lại toàn bộ dữ liệu game về trạng thái ban đầu để bắt đầu một ván mới.
-     * Xóa bảng, reset điểm/level, đổi trạng thái sang PLAYING và sinh khối gạch đầu tiên.
-     */
-    public void reset() {
-        board.reset();
-        score = 0;
-        level = 1;
-        comboCount = 0; // Thêm dòng này để reset combo khi chơi lại
-        state = GameState.PLAYING;
-        this.nextPiece = null;
-        spawnNewPiece();
     }
     /**
      * Hàm ghi điểm cao nhất cảu người chơi vào file.
