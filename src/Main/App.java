@@ -3,8 +3,10 @@ package Main;
 import controller.GameController;
 import controller.InputHandler;
 import model.GameModel;
+import model.GameState;
 import view.GameGUI;
 
+import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowFocusListener;
 
@@ -23,7 +25,26 @@ public class App {
             gui.getMainFrame().requestFocus();
         });
 
-        // [UC-02 - Luồng thay thế 2.4]: Bắt sự kiện hệ thống cửa sổ mất tiêu điểm (Lose Focus)
+        // ===================================================================
+        // [UC-03 - PHÂN PHỐI SỰ KIỆN ĐÓNG CỬA SỔ TẬP TRUNG THEO SƠ ĐỒ TUẦN TỰ]
+        // ===================================================================
+        gui.getMainFrame().addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                // 3.1.1. Người chơi bấm nút đóng cửa sổ (dấu X) hoặc tổ hợp Alt+F4
+                GameState currentState = model.getState();
+
+                // Nhánh rẽ 1: Nếu đang chơi bình thường (PLAYING) -> Chuyển luồng thay thế 3.3
+                if (currentState == GameState.PLAYING || currentState == GameState.PAUSED) {
+                    controller.forceCloseRequest();
+                }
+                // Nhánh rẽ 2: Nếu đang ở các trạng thái an toàn khác (MENU, PAUSED, GAME_OVER) -> Luồng cơ bản 3.1
+                else {
+                    controller.exitApplication();
+                }
+            }
+        });
+
         gui.getMainFrame().addWindowFocusListener(new WindowFocusListener() {
             @Override
             public void windowGainedFocus(WindowEvent e) {
