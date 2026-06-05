@@ -365,4 +365,19 @@ public class GameModel {
         piece.printCoords();
     }
 
+    /**
+     * [UC-03 - Bước 3.2.2]: Hủy tiến trình ván đấu cũ, dọn sạch lưới và đưa điểm/level về mặc định
+     */
+    public void clearCurrentGameSession() {
+        this.resetScore();
+        this.setLevel(1);
+    }
+
+    /**
+     * [UC-03 - Bước 3.1.3]: Ghi nhận, kiểm tra dữ liệu kỷ lục và lưu Highscore xuống tệp txt
+     */
+    public void checkAndSaveHighScore() {
+        // Tái sử dụng hàm saveHighscore sẵn có của bạn với tên mặc định là "Player"
+        this.saveHighscore("Player", this.score);
+    }
 }
