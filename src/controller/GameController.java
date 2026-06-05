@@ -41,6 +41,7 @@ public class GameController {
      * Giúp tránh việc khối mới vừa sinh ra đã rơi vèo xuống nếu người chơi giữ rịt phím DOWN.
      */
     private boolean canSoftDrop = true;
+    private boolean isClearingAnimationActive = false;
 
     /**
      * Khởi tạo GameController kết nối Model và View.
@@ -88,6 +89,8 @@ public class GameController {
      * </ol>
      */
     public void gameLoop() {
+        if (isClearingAnimationActive) return;
+
         if (model.getState() == GameState.GAME_OVER) {
             if (gameTimer != null && gameTimer.isRunning()) {
                 gameTimer.stop();
@@ -109,6 +112,7 @@ public class GameController {
 
             java.util.List<Integer> fullLines = board.scanFullLines();
             if (!fullLines.isEmpty()) {
+                isClearingAnimationActive = true;
                 board.setClearingLines(fullLines);
                 view.refresh();
 
@@ -135,6 +139,7 @@ public class GameController {
                             view.refresh();
 
                             model.setGameState(GameState.PLAYING);
+                            isClearingAnimationActive = false;
                             if (gameTimer != null) {
                                 gameTimer.start();
                             }
@@ -167,6 +172,7 @@ public class GameController {
      * Tạm dừng game bằng cách dừng {@link Timer}.
      */
     public void pauseGame() {
+        if (isClearingAnimationActive) return;
         if (model.getState() == GameState.PLAYING) {
             // 2.1.2 / 2.4.3. stop() -> Dừng đếm thời gian của Game Timer
             if (gameTimer != null && gameTimer.isRunning()) {
@@ -221,28 +227,89 @@ public class GameController {
     }
 
     /**
-     * [UC-02 - Luồng 2.3]: Người chơi chọn nút lệnh "Thoát" (Exit) về Menu chính từ Pause Menu
+     * [UC-02 / UC-03 - Luồng thay thế 3.2]: Chọn "Thoát" về Menu từ Menu Tạm dừng (PAUSED)
      */
     public void exitToMainMenu() {
         if (model.getState() == GameState.PAUSED) {
-            // 2.3.2. hidePauseMenu() -> Đóng lớp phủ tùy chọn trên UI
+            // 3.2.1. hidePauseMenu() -> Đóng lớp phủ Menu Tạm dừng trên giao diện UI
             view.hidePauseMenu();
-            model.resetScore(); // Đặt lại Score về 0, resetCombo về mặc định
-            model.setLevel(1);  // Đặt Level về 0 (Hàm này của bạn đã tự gọi board.reset() xóa sạch lưới)
-            view.updateLevelUI(1); // Ép UI hiển thị lại số cấp độ ban đầu
 
-            // 2.3.3. Kết thúc trạng thái PAUSED [Gọi xử lý đưa về Menu chính của UC-03]
+            // 3.2.2. clearCurrentGameSession() -> Gọi Model hủy tiến trình ván đấu cũ
+            model.clearCurrentGameSession();
+            view.updateLevelUI(1); // Đồng bộ giao diện thông tin cấp độ
+
+            // 3.2.3. setGameState(GameState.MENU) -> Đưa trạng thái hệ thống về MENU
             model.setGameState(GameState.MENU);
 
-            // showMainMenu() -> Hiển thị lại màn hình chờ ban đầu
+            // 3.2.3. showMainMenu() -> Hiển thị lại giao diện Menu chờ chính
             view.showMainMenu();
         }
     }
 
     /**
-     * [UC-01]: Hàm điều phối khởi tạo ván đấu mới kích hoạt từ nút "Bắt đầu" (1.1.1) hoặc nút "Chơi lại" (1.2.1)
-     * [BỔ SUNG ĐẦY ĐỦ COMMENT ĐÁNH SỐ THEO SEQUENCE DIAGRAM UC-01 MỚI]
+     * [UC-03 - Luồng thay thế 3.3]: Người chơi bấm nút đóng ứng dụng khi game đang chạy (PLAYING)
      */
+    public void forceCloseRequest() {
+        // 3.3.2. stop() -> Tạm dừng vòng lặp đếm nhịp rơi tự động của gạch
+        if (gameTimer != null && gameTimer.isRunning()) {
+            gameTimer.stop();
+        }
+
+        // 3.3.2. showConfirmationDialog() -> Hiển thị hộp thoại xác nhận thoát ván
+        boolean userChoice = view.showConfirmationDialog("Bạn có chắc chắn muốn thoát và đóng trò chơi không? Tiến trình ván đấu sẽ bị mất.");
+
+        // ===== BẮT ĐẦU KHUNG ĐIỀU KIỂM TRA RẼ NHÁNH XÁC NHẬN THOÁT (ALT) =====
+        if (!userChoice) {
+            // [[3.3.3. Người chơi chọn "Không" (Cancel)]] -> Kích hoạt luồng hủy lệnh thoát
+            cancelExit();
+        } else {
+            // [[3.3.4. Người chơi chọn "Có" (OK)]] -> Kích hoạt luồng xác nhận thoát hoàn toàn
+            confirmExit();
+        }
+    }
+
+    /**
+     * [UC-03 - Bước 3.3.3]: Hủy lệnh đóng cửa sổ, khôi phục lại Game Timer và quay lại ván chơi hiện tại
+     */
+    public void cancelExit() {
+        if (model.getState() == GameState.PLAYING) {
+            if (gameTimer != null) {
+                gameTimer.start();
+            }
+        }
+        view.refresh(); // Trở lại trạng thái PLAYING ban đầu
+    }
+
+    /**
+     * [UC-03 - Bước 3.3.4]: Xác nhận lệnh đóng, chuyển hướng dòng điều khiển xuống luồng shutdown hệ thống
+     */
+    public void confirmExit() {
+        exitApplication();
+    }
+
+    /**
+     * [UC-03 - Luồng cơ bản 3.1 & Luồng 3.3.4]: Thực thi dọn dẹp hệ thống và đóng hoàn toàn ứng dụng
+     */
+    public void exitApplication() {
+        // 3.1.2. stop() -> Đảm bảo chắc chắn Game Timer đã dừng hẳn ngầm trong bộ nhớ
+        if (gameTimer != null) {
+            gameTimer.stop();
+        }
+
+        // 3.1.3. checkAndSaveHighScore() -> Gọi phương thức kiểm tra và lưu kỷ lục điểm cao của Model
+        model.checkAndSaveHighScore();
+
+        // [3.1.4. Giải phóng tài nguyên hệ thống (Bộ nhớ, hình ảnh, âm thanh)]
+
+        // 3.1.5. dispose() -> Đóng cửa sổ giao diện chính đồ họa của ứng dụng
+        if (view.getMainFrame() != null) {
+            view.getMainFrame().dispose();
+        }
+
+        // 3.1.6. System.exit(0) -> Kết thúc hoàn toàn tiến trình ứng dụng
+        System.exit(0);
+    }
+
     public void startOrResetGame() {
 
         // ===== BẮT ĐẦU KHUNG KIỂM TRA RẼ NHÁNH (ALT) =====
@@ -255,6 +322,7 @@ public class GameController {
         }
         // [[1.1.0. model.state != GameState.PLAYING]] (MENU hoặc GAME_OVER hoặc PAUSED chuyển sang)
         else {
+            isClearingAnimationActive = false;
             // 1.1.2. resetScore() -> Yêu cầu Model đặt lại điểm số về 0
             model.resetScore();
 
@@ -293,8 +361,7 @@ public class GameController {
      */
     public void moveLeft() {
         // 2.1.3. Vô hiệu hóa phím di chuyển nếu trạng thái game đang bị tạm dừng hoặc ở menu
-        if (model.getState() != GameState.PLAYING) return;
-
+        if (isClearingAnimationActive || model.getState() != GameState.PLAYING) return;
         Tetromino current = model.getCurrentPiece();
         // Hỏi Board xem sang trái (x - 1) có đụng tường không?
         if (model.getBoard().isValidMove(current, current.getX() - 1, current.getY())) {
@@ -309,8 +376,7 @@ public class GameController {
      */
     public void moveRight() {
         // 2.1.3. Vô hiệu hóa phím di chuyển nếu trạng thái game đang bị tạm dừng hoặc ở menu
-        if (model.getState() != GameState.PLAYING) return;
-
+        if (isClearingAnimationActive || model.getState() != GameState.PLAYING) return;
         Tetromino current = model.getCurrentPiece();
         // Hỏi Board xem sang phải (x + 1) có đụng tường không?
         if (model.getBoard().isValidMove(current, current.getX() + 1, current.getY())) {
@@ -326,8 +392,7 @@ public class GameController {
      */
     public void moveDown() {
         // 2.1.3. Vô hiệu hóa phím di chuyển nếu trạng thái game đang bị tạm dừng hoặc ở menu
-        if (model.getState() != GameState.PLAYING) return;
-
+        if (isClearingAnimationActive || model.getState() != GameState.PLAYING) return;
         if (canSoftDrop) {
             gameLoop();
         }
@@ -339,8 +404,7 @@ public class GameController {
      */
     public void handleHoldPiece() {
         // 2.1.3. Vô hiệu hóa phím di chuyển nếu trạng thái game đang bị tạm dừng hoặc ở menu
-        if (model.getState() != GameState.PLAYING) return;
-
+        if (isClearingAnimationActive || model.getState() != GameState.PLAYING) return;
         model.holdCurrentPiece();
         view.refresh();
     }
@@ -361,13 +425,10 @@ public class GameController {
      */
     public void rotatePiece() {
         // 2.1.3. Vô hiệu hóa phím di chuyển nếu trạng thái game đang bị tạm dừng hoặc ở menu
-        if (model.getState() != GameState.PLAYING) return;
-
+        if (isClearingAnimationActive || model.getState() != GameState.PLAYING) return;
         Tetromino current = model.getCurrentPiece();
         // Chỉ xử lý xoay khi game đang chơi bình thường
-        if (current == null || model.getState() != GameState.PLAYING) {
-            return;
-        }
+        if (current == null) return;
 
         // Cứ xoay bừa đi đã...
         current.rotate();
@@ -445,8 +506,7 @@ public class GameController {
         return this.model;
     }
     public void hardDrop() {
-        if (model.getState() != GameState.PLAYING) return;
-
+        if (isClearingAnimationActive || model.getState() != GameState.PLAYING) return;
         Tetromino current = model.getCurrentPiece();
         Board board = model.getBoard();
         while(board.isValidMove(current, current.getX(), current.getY() + 1)) {
@@ -456,8 +516,8 @@ public class GameController {
 
         List<Integer> fullLines = board.scanFullLines();
         if (!fullLines.isEmpty()) {
+            isClearingAnimationActive = true;
             board.setClearingLines(fullLines);
-
             if (gameTimer != null) {
                 gameTimer.stop();
             }
@@ -484,6 +544,7 @@ public class GameController {
                         model.spawnNewPiece();
 
                         model.setGameState(GameState.PLAYING);
+                        isClearingAnimationActive = false;
                         if (gameTimer != null) {
                             gameTimer.start();
                         }
@@ -495,6 +556,7 @@ public class GameController {
             });
 
             blinkTimer.start();
+
             if (fullLines.size() == 1) {
                 soundManager.playSFX("src/audio/single.wav");
             } else if (fullLines.size() >= 2) {
