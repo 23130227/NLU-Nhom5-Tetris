@@ -62,7 +62,7 @@ public class GameController {
      */
     public void startGame() {
         if (gameTimer == null) {
-            gameTimer = new Timer(500, new ActionListener() {
+            gameTimer = new Timer(1000, new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
                     gameLoop();
@@ -134,7 +134,18 @@ public class GameController {
                         if (count >= 6) { // nhấp nháy 6 lần
                             board.clearAndShift(fullLines);
                             board.setClearingLines(new ArrayList<>());
-                            model.updateScore(fullLines.size());
+                            model.updateScore(fullLines.size()); // Điểm số và Level được cập nhật tại đây
+
+                            // ===================================================================
+                            // TỰ ĐỘNG TĂNG TỐC ĐỘ RƠI THEO LEVEL
+                            // Công thức: Cứ tăng 1 Level thì giảm 50ms chờ (Gạch rơi nhanh hơn).
+                            // Giới hạn tối thiểu (Math.max) là 100ms để tránh gạch rơi quá nhanh không kịp nhìn.
+                            // ===================================================================
+                            int newDelay = Math.max(100, 1000 - (model.getLevel() - 1) * 50);
+                            if (gameTimer != null) {
+                                gameTimer.setDelay(newDelay);
+                            }
+
                             model.spawnNewPiece();
                             view.refresh();
 
@@ -340,7 +351,7 @@ public class GameController {
 
             if (gameTimer != null) {
                 // 1.1.6. setDelayForLevel1() -> Thiết lập nhịp delay mặc định của Level 1 (500ms)
-                gameTimer.setDelay(500);
+                gameTimer.setDelay(1000);
                 // start() -> Kích hoạt Timer chạy vòng lặp rơi tự động
                 gameTimer.start();
             }
@@ -539,8 +550,16 @@ public class GameController {
 
                         board.clearAndShift(fullLines);
                         board.setClearingLines(new ArrayList<>());
+                        model.updateScore(fullLines.size()); // Điểm số và Level được cập nhật tại đây
 
-                        model.updateScore(fullLines.size());
+                        // ===================================================================
+                        // TỰ ĐỘNG TĂNG TỐC ĐỘ RƠI THEO LEVEL (ĐỒNG BỘ HARD DROP)
+                        // ===================================================================
+                        int newDelay = Math.max(100, 1000 - (model.getLevel() - 1) * 50);
+                        if (gameTimer != null) {
+                            gameTimer.setDelay(newDelay);
+                        }
+
                         model.spawnNewPiece();
 
                         model.setGameState(GameState.PLAYING);
