@@ -426,6 +426,11 @@ public class GameController {
      */
     public void resetSoftDrop() {
         canSoftDrop = true;
+
+        if (model.getState() == GameState.PLAYING && gameTimer != null) {
+            int currentDelay = Math.max(100, 1000 - (model.getLevel() - 1) * 50);
+            gameTimer.setDelay(currentDelay);
+        }
     }
 
     /**
