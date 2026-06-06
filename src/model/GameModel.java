@@ -161,38 +161,46 @@ public class GameModel {
         this.canHold = true;
     }
 
+    // PHẦN MÃ NGUỒN PHÁT TRIỂN TIẾP DO SINH VIÊN: DOÃN TRẦN ĐÌNH KHANG (MSSV: 23130143) THỰC HIỆN
+    // TƯƠNG ỨNG VỚI CÁC BƯỚC MÔ TẢ TRONG UC-04.5: GIỮ GẠCH (HOLD PIECE)
+
     /**
-     * Xử lý tính năng giữ khối gạch hiện tại (Hold).
-     * <p><i>Lưu ý: Hàm này hiện tại đang để trống (placeholder) chờ được implement logic tráo đổi.</i>
+     * Xử lý tính năng giữ khối gạch hiện tại (Hold) và tráo đổi cấu trúc hình học.
+     * Phương thức này thực hiện kiểm tra trạng thái kho lưu trữ và hoán đổi vị trí.
      */
     public void holdCurrentPiece() {
-        /** Nếu lượt này đã đổi gạch rồi thì không cho phép đổi nữa */
+        // [Bước 4.5.3.1 / 4.5.3.2]: Kiểm tra cờ cho phép, nếu lượt này đã đổi gạch rồi thì từ chối lệnh để ngăn spam
         if (!canHold) {
             return;
         }
 
+        // [Bước 4.5.1.2]: Hệ thống kiểm tra kho chứa Hold xem hiện tại đang trống hay đã có gạch
         if (holdPiece == null) {
-            /** Trường hợp 1: Ô Hold đang trống */
+            // [[Luồng cơ bản 4.5.1 - Bước 4.5.1.3]]: Ô Hold đang trống, đưa khối hiện tại (currentPiece) vào kho chứa Hold
             holdPiece = currentPiece;
-            /** Sinh luôn khối gạch tiếp theo để người chơi đá tiếp */
+
+            // [[Luồng cơ bản 4.5.1 - Bước 4.5.1.4 & 4.5.1.5]]: Sinh khối gạch mới để lấp đầy và đẩy viên tiếp theo ra rơi tiếp
             spawnNewPiece();
         } else {
-            /** Trường hợp 2: Đã có gạch trong ô Hold, tiến hành hoán đổi (Swap) */
+            // [[Luồng thay thế 4.5.2 - Bước 4.5.2.2]]: Ô Hold đã có gạch, tiến hành hoán đổi trực tiếp (Swap) giữa current và hold
             Tetromino temp = currentPiece;
             currentPiece = holdPiece;
             holdPiece = temp;
 
-            /** Đặt lại tọa độ xuất phát cho khối gạch vừa lấy từ ô Hold ra ở đỉnh bàn cờ */
-            /** Thường là ở giữa chiều rộng của Board (ví dụ: x = 3 hoặc 4, y = 0) */
+            // [[Luồng thay thế 4.5.2 - Bước 4.5.2.2]]: Thiết lập lại tọa độ xuất phát an toàn cho khối gạch vừa lấy ra ở đỉnh bàn cờ (x=4, y=0)
             currentPiece.setX(4);
             currentPiece.setY(0);
         }
 
-        /** Khóa tính năng Hold lại, chỉ mở ra khi khối gạch này được hạ cánh và sinh khối mới */
+        // [Bước 4.5.1.6 / 4.5.2.3]: Đánh dấu cờ (flag) vô hiệu hóa chức năng Hold trong phần còn lại của lượt rơi này
         canHold = false;
     }
 
-    /** Hàm getter để sau này lớp View (SidePanel) lấy khối gạch ra vẽ lên UI */
+    /**
+     * Hàm getter trả về đối tượng Tetromino đang nằm trong kho lưu trữ.
+     * Phục vụ cho SidePanel gọi dữ liệu ra hiển thị lên giao diện đồ họa.
+     * @return khối gạch đang được cất giữ
+     */
     public Tetromino getHeldPiece() {
         return holdPiece;
     }
@@ -322,28 +330,31 @@ public class GameModel {
         }
         return records;
     }
-    // NÂNG CẤP TÍNH NĂNG BÓNG GẠCH
+
+    // PHẦN MÃ NGUỒN PHÁT TRIỂN TIẾP - TÍNH NĂNG NÂNG CẤP: DỰ ĐOÁN BÓNG GẠCH MỜ (GHOST PIECE)
     /**
-     * Thuật toán tìm tọa độ Y thấp nhất mà khối gạch hiện tại có thể rơi xuống (vị trí của bóng gạch).
-     * Hàm này duyệt từ vị trí Y hiện tại, tăng dần cho tới khi va chạm.
-     * * @return tọa độ Y sâu nhất hợp lệ dưới đáy bàn cờ
+     * Thuật toán giả lập rơi tự do để tìm tọa độ trục Y sâu nhất dưới đáy bàn cờ.
+     * Hoạt động dựa trên cơ chế vòng lặp dịch chuyển thử cho đến khi va chạm vật cản.
+     * @return tọa độ Y thấp nhất hợp lệ mà khối gạch hiện tại có thể hạ cánh
      */
     public int getGhostY() {
         if (currentPiece == null) {
             return 0;
         }
 
-        // Bắt đầu từ tọa độ Y hiện tại của khối gạch đang rơi
+        // Bước 1: Khởi tạo tọa độ Y giả lập bằng đúng tọa độ Y hiện tại của khối gạch thật đang rơi
         int ghostY = currentPiece.getY();
 
-        // Vòng lặp thử đi xuống: Nếu ô tiếp theo (ghostY + 1) vẫn trống và hợp lệ thì đi xuống tiếp
+        // Bước 2: Chạy vòng lặp giả lập đi xuống. Hỏi Board xem nếu tăng tọa độ Y thêm 1 ô (ghostY + 1) thì có bị kẹt tường/gạch cũ không?
         while (board.isValidMove(currentPiece, currentPiece.getX(), ghostY + 1)) {
+            // Bước 3: Nếu vị trí tiếp theo vẫn trống trải hợp lệ, tiến hành tịnh tiến ghostY xuống sâu hơn
             ghostY++;
         }
 
-        // Trả về tọa độ Y sâu nhất tìm được để lớp View sử dụng để vẽ bóng
+        // Bước 4: Trả về tọa độ Y sâu nhất tìm được để phục vụ cho tầng View thực hiện đổ bóng đồ họa
         return ghostY;
     }
+
     /**
      * Hàm main dùng để test (kiểm thử) hoạt động của GameModel.
      * Chạy độc lập không cần giao diện.

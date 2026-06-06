@@ -409,14 +409,20 @@ public class GameController {
         }
     }
 
+    // PHẦN MÃ NGUỒN PHÁT TRIỂN TIẾP DO SINH VIÊN: DOÃN TRẦN ĐÌNH KHANG (MSSV: 23130143) THỰC HIỆN
+    // TƯƠNG ỨNG VỚI CÁC BƯỚC TRONG UC-04.6: XOAY THÔNG MINH (WALL KICK) & ĐIỀU PHỐI HOLD PIECE
     /** Xử lý tính năng Hold: Đổi khối hiện tại với khối đang giữ trong ô Hold.
      * * <p>Chỉ cho phép đổi nếu game đang ở trạng thái PLAYING và cờ Hold chưa bị khóa.
      * Sau khi đổi thành công, yêu cầu giao diện vẽ lại ngay lập tức.
      */
     public void handleHoldPiece() {
-        // 2.1.3. Vô hiệu hóa phím di chuyển nếu trạng thái game đang bị tạm dừng hoặc ở menu
+        // [Bước 2.1.3]: Vô hiệu hóa phím bấm nếu game đang chạy hiệu ứng xóa hàng (Animation) hoặc không ở trạng thái PLAYING
         if (isClearingAnimationActive || model.getState() != GameState.PLAYING) return;
+
+        // Điều phối dòng dữ liệu xuống Model thực hiện đổi khối gạch
         model.holdCurrentPiece();
+
+        // [Bước 4.5.1.7]: Gọi hàm làm mới giao diện để ép toàn bộ hệ thống vẽ lại khung SidePanel và ô chứa HOLD BOX
         view.refresh();
     }
 
@@ -440,65 +446,68 @@ public class GameController {
      * thì xoay thêm 3 lần nữa (270 độ) để trả khối về hình dáng ban đầu.
      */
     public void rotatePiece() {
-        // 2.1.3. Vô hiệu hóa phím di chuyển nếu trạng thái game đang bị tạm dừng hoặc ở menu
+        // [Bước 2.1.3]: Vô hiệu hóa hành động xoay nếu trạng thái game đang bị tạm dừng hoặc không ở trạng thái PLAYING
         if (isClearingAnimationActive || model.getState() != GameState.PLAYING) return;
+
         Tetromino current = model.getCurrentPiece();
-        // Chỉ xử lý xoay khi game đang chơi bình thường
         if (current == null) return;
 
-        // Cứ xoay bừa đi đã...
+        // [Bước 4.6.1.1]: Thực hiện xoay thử cấu trúc ma trận 2D của khối gạch hiện tại đi 90 độ theo chiều kim đồng hồ
         current.rotate();
 
-        // Lấy tọa độ gốc trước khi xoay để làm mốc thử nghiệm dịch chuyển
+        // [Bước 4.6.1.1]: Lưu lại tọa độ trục X và Y ban đầu trước khi xoay để làm mốc tịnh tiến thử nghiệm
         int originalX = current.getX();
         int originalY = current.getY();
 
-        // Kiểm tra xem vị trí mặc định tại chỗ sau khi xoay có hợp lệ không?
+        // [Bước 4.6.1.2]: Gọi hàm board.isValidMove() để kiểm tra xem vị trí mặc định tại chỗ sau khi xoay có bị cấn vách không?
         if (model.getBoard().isValidMove(current, originalX, originalY)) {
-            // Vị trí trống trải, xoay thành công ngay tại chỗ, cập nhật UI và kết thúc luôn
+            // [[Luồng thay thế 4.6.2 - Bước 4.6.2.1 / 4.6.2.3]]: Vị trí hoàn toàn trống trải, xoay thành công, refresh UI và kết thúc sớm
             view.refresh();
             return;
         }
 
-        // THUẬT TOÁN WALL KICK (Giải quyết Pain Point kẹt tường/gạch)
-        // Định nghĩa các khoảng dịch chuyển thử nghiệm (Mảng Offsets: {Dịch X, Dịch Y})
+        // [[Luồng cơ bản 4.6.1 - Bước 4.6.1.3]]: KÍCH HOẠT THUẬT TOÁN WALL KICK (Do phát hiện va chạm tại chỗ)
+        // Định nghĩa mảng 2 chiều chứa các khoảng dịch chuyển tịnh tiến thử nghiệm an toàn (Mảng Offsets: {Dịch X, Dịch Y})
         int[][] kickOffsets = {
-                {-1, 0},  // Thử đẩy khối sang trái 1 ô (Cứu nguy khi kẹt sát tường bên phải)
-                {1, 0},   // Thử đẩy khối sang phải 1 ô (Cứu nguy khi kẹt sát tường bên trái)
-                {-2, 0},  // Thử đẩy khối sang trái 2 ô (Đặc biệt cần thiết cho khối dài chữ I)
-                {2, 0},   // Thử đẩy khối sang phải 2 ô (Cho khối chữ I kẹt tường trái)
-                {0, -1},  // Thử nhấc khối lên trên 1 ô (Cứu nguy khi xoay sát đống gạch cũ ở đáy)
-                {-1, -1}, // Thử dịch trái 1 ô và nhấc lên 1 ô
-                {1, -1}   // Thử dịch phải 1 ô và nhấc lên 1 ô
+                {-1, 0},  // Ca 1: Thử đẩy khối sang trái 1 ô (Cứu nguy khi xoay bị cấn sát vách tường bên phải)
+                {1, 0},   // Ca 2: Thử đẩy khối sang phải 1 ô (Cứu nguy khi xoay bị cấn sát vách tường bên trái)
+                {-2, 0},  // Ca 3: Thử đẩy khối sang trái 2 ô (Đặc biệt cần thiết cho khối thanh dài chữ I khi cấn biên vách)
+                {2, 0},   // Ca 4: Thử đẩy khối sang phải 2 ô (Hỗ trợ khối chữ I khi cấn vách biên bên trái)
+                {0, -1},  // Ca 5: Thử nhấc khối lên phía trên 1 ô (Cứu nguy khi xoay sát chướng ngại vật đống gạch cũ ở đáy)
+                {-1, -1}, // Ca 6: Thử dịch chéo sang trái 1 ô và nhấc lên trên 1 ô
+                {1, -1}   // Ca 7: Thử dịch chéo sang phải 1 ô và nhấc lên trên 1 ô
         };
 
         boolean kickSuccess = false;
 
-        // Duyệt qua từng phương án dịch biên xem phương án nào thỏa mãn lưới Board trống
+        // [[Luồng cơ bản 4.6.1 - Bước 4.6.1.4]]: Chạy vòng lặp tuần tự duyệt qua từng phương án dịch biên an toàn trong danh sách
         for (int[] offset : kickOffsets) {
             int testX = originalX + offset[0];
             int testY = originalY + offset[1];
 
-            // ...rồi hỏi Board xem xoay xong có bị kẹt vào tường/gạch khác không?
+            // [[Luồng cơ bản 4.6.1 - Bước 4.6.1.4]]: Gửi tọa độ tịnh tiến thử nghiệm xuống hỏi thực thể Board xem vị trí mới này có trống không?
             if (model.getBoard().isValidMove(current, testX, testY)) {
-                // Tìm thấy vị trí trống cứu vãn hợp lệ! Áp dụng tọa độ mới cho khối gạch
+                // [[Luồng cơ bản 4.6.1 - Bước 4.6.1.5 & 4.6.1.6]]: Tìm thấy phương án cứu vãn hợp lệ! Cập nhật tọa độ trục X và Y mới cho gạch
                 current.setX(testX);
                 current.setY(testY);
                 kickSuccess = true;
-                break; // Thoát vòng lặp ngay khi tìm được phương án hợp lệ đầu tiên
+                break; // Ngắt vòng lặp lập tức ngay khi tìm thấy phương án thỏa mãn đầu tiên để tối ưu hiệu năng
             }
         }
 
-        // HOÀN TÁC (Undo): Nếu đã thử hết mọi cách đẩy tường mà vẫn kẹt, bắt buộc phải hủy xoay
+        // [[Luồng thay thế 4.6.3 - Bước 4.6.3.1 / 4.6.3.3]]: HOÀN TÁC (UNDO LỆNH XOAY)
+        // Xảy ra khi đã lặp hết mọi khoảng tịnh tiến đẩy biên tường nhưng phương án nào cũng đè lên gạch cũ hoặc ra ngoài lưới
         if (!kickSuccess) {
-            // BỊ KẸT RỒI! Phải xoay ngược lại.
-            // Vì hàm rotate của bạn xoay 90 độ, nên xoay thêm 3 lần nữa (270 độ) sẽ về chỗ cũ!
+            // Xoay ma trận thêm 3 lần nữa (Tổng cộng quay 270 độ) để đưa khối gạch quay trở lại đúng phom dáng hình học nguyên bản ban đầu
             current.rotate();
             current.rotate();
             current.rotate();
         }
+
+        // [Bước 4.6.1.7 / 4.6.3.4]: Yêu cầu tầng giao diện đồ họa làm mới màn hình hiển thị kết quả xoay an toàn của khối gạch
         view.refresh();
     }
+
     /**
      * Bật hoặc tắt nhạc nền trong game.
      *
