@@ -109,7 +109,7 @@ public class GameController {
             current.move(0, 1);
         } else {
             board.lockPiece(current);
-
+           // [UC-05 - Bước 5.1.0] Khối gạch vừa chạm đáy và lấp đầy hàng
             java.util.List<Integer> fullLines = board.scanFullLines();
             if (!fullLines.isEmpty()) {
                 isClearingAnimationActive = true;
@@ -132,8 +132,10 @@ public class GameController {
                         count++;
 
                         if (count >= 6) { // nhấp nháy 6 lần
+            // [UC-05 - Bước 5.1.1, 5.1.2] Hệ thống tiến hành xóa hàng và dồn khối gạch xuống
                             board.clearAndShift(fullLines);
                             board.setClearingLines(new ArrayList<>());
+                            // Gọi sang Model tính điểm
                             model.updateScore(fullLines.size()); // Điểm số và Level được cập nhật tại đây
 
                             // ===================================================================
@@ -141,12 +143,14 @@ public class GameController {
                             // Công thức: Cứ tăng 1 Level thì giảm 50ms chờ (Gạch rơi nhanh hơn).
                             // Giới hạn tối thiểu (Math.max) là 100ms để tránh gạch rơi quá nhanh không kịp nhìn.
                             // ===================================================================
+                            // [UC-05 - Luồng thay thế 5.2 - Bước 5.2.3] Hệ thống tự động giảm độ trễ (delay) của Game Timer
                             int newDelay = Math.max(100, 1000 - (model.getLevel() - 1) * 50);
                             if (gameTimer != null) {
                                 gameTimer.setDelay(newDelay);
                             }
-
+                // [UC-05 - Bước 5.1.11] Phát tín hiệu yêu cầu cập nhật giao diện
                             model.spawnNewPiece();
+                            // [UC-05 - Bước 5.1.11]
                             view.refresh();
 
                             model.setGameState(GameState.PLAYING);
@@ -161,8 +165,11 @@ public class GameController {
                 });
                 System.out.println("Timer Started");
                 blinkTimer.start();
+
                 if (fullLines.size() == 1) {
                     soundManager.playSFX("src/audio/single.wav");
+
+                    // [UC-05 - Bước 5.1.3,5.1.4] Nếu xóa từ 2 hàng trở lên, phát ra tệp âm thanh báo hiệu Combo
                 } else if (fullLines.size() >= 2) {
                     soundManager.playSFX("src/audio/combo.wav");
                 }
@@ -572,7 +579,7 @@ public class GameController {
                         if (gameTimer != null) {
                             gameTimer.start();
                         }
-
+                        // [UC-05 - Bước 5.1.11] Phát tín hiệu yêu cầu cập nhật giao diện
                         view.refresh();
                         blinkTimer.stop();
                     }
@@ -580,10 +587,11 @@ public class GameController {
             });
 
             blinkTimer.start();
-
+                // [UC-05 - Bước 5.1.3] Kiểm tra số lượng hàng
             if (fullLines.size() == 1) {
                 soundManager.playSFX("src/audio/single.wav");
-            } else if (fullLines.size() >= 2) {
+            }  //// [UC-05 - Bước 5.1.4] Xóa >= 2 hàng phát âm combo
+            else if (fullLines.size() >= 2) {
                 soundManager.playSFX("src/audio/combo.wav");
             }
             return;

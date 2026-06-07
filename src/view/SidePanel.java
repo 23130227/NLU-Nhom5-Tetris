@@ -73,12 +73,13 @@ public class SidePanel extends JPanel {
     }
 
     private void drawNextPiece(Graphics2D g2d) {
+        // [UC-06 - Bước 6.1.4] Giao diện phụ gọi dữ liệu từ GameModel để lấy thông tin khối gạch tiếp theo
         drawPreviewBox(g2d, 95, 480, model.getNextPiece());
     }
 
     private void drawPreviewBox(Graphics2D g2d, int x, int y, Tetromino nextPiece) {
         g2d.setColor(Color.DARK_GRAY);
-
+       // [UC-06 - Bước 6.1.5] SidePanel vẽ khối gạch mới lên vùng hiển thị (Preview area)
         if (nextPiece != null) {
             int[][] matrix = nextPiece.getMatrix();
             Color color = nextPiece.getColor();
@@ -121,11 +122,13 @@ public class SidePanel extends JPanel {
 
         g2d.drawString("SCORE", 20, 50);
         g2d.setFont(new Font("Arial", Font.PLAIN, 25));
+        // [UC-05 - Bước 5.1.12]
         g2d.drawString(String.valueOf(model.getScore()), 20, 80);
 
         g2d.setFont(new Font("Arial", Font.BOLD, 20));
         g2d.drawString("LEVEL", 20, 150);
         g2d.setFont(new Font("Arial", Font.PLAIN, 25));
+        // [UC-05 - Bước 5.2.4]
         g2d.drawString(String.valueOf(model.getLevel()), 20, 180);
     }
 
