@@ -87,31 +87,29 @@ public class GameModel {
     }
 
     public void updateScore(int lineCount) {
+        // [UC-05 - Bước 5.1.8] Hệ thống tính toán số điểm cơ bản được cộng thêm
         if (lineCount > 0) {
-            // 1. Điểm cơ bản (1 hàng = 100, 2 hàng = 300, 3 hàng = 500, 4 hàng = 800)
             int[] scoreTable = {0, 100, 300, 500, 800};
             int baseScore = scoreTable[lineCount];
-
             int comboBonus = 0;
 
-            // 2. LUẬT MỚI: Chỉ khi ăn từ 2 hàng trở lên mới tăng Combo
+            // [UC-05 - Bước 5.1.5] Hệ thống tiến hành kiểm tra số lượng hàng vừa xóa để cập nhật trạng thái chuỗi Combo
             if (lineCount >= 2) {
-                this.comboCount++; // Tăng chuỗi combo lên
+                // [UC-05 - Bước 5.1.6]Tăng biến đếm chuỗi Combo thêm 1 đơn vị
+                this.comboCount++;
 
+                // [UC-05 - Bước 5.1.9]Hệ thống tính toán số điểm thưởng Combo gia tăng
                 int currentLevel = Math.max(1, this.level);
                 comboBonus = 50 * this.comboCount * currentLevel;
-
-                System.out.println("=> COMBO x" + this.comboCount + " KÍCH HOẠT! Thưởng Combo: +" + comboBonus);
             } else {
-                // Nếu lượt này chỉ ăn 1 hàng đơn lẻ -> Bị đứt chuỗi Combo cũ, đưa về 0
+                // [UC-05 - Bước 5.1.7]Nhận diện chuỗi ăn điểm bị đứt và tự động đặt biến đếm Combo về lại giá trị 0
                 resetCombo();
-                System.out.println("=> Xóa 1 hàng đơn lẻ (Không có thưởng Combo)");
             }
 
-            // 3. Cộng tổng điểm
+            // [UC-05 - Bước 5.1.10] Hệ thống cộng dồn tổng số điểm mới vào tổng điểm hiện tại (Score)
             this.score += (baseScore + comboBonus);
 
-            // 4. Tăng level mỗi khi đạt 1000 điểm
+            // [UC-05 - Bước 5.2.1, 5.2.2] Kiểm tra đạt ngưỡng thăng cấp và tăng cấp độ (Level) lên 1
             this.level = (this.score / 1000) + 1;
         }
     }
@@ -140,24 +138,23 @@ public class GameModel {
     public void spawnNewPiece() {
         Random rand = new Random();
 
-        // 1. Nếu là lần đầu tiên chạy game (nextPiece chưa có gì), random viên đầu tiên
+        // [UC-06 - Bước 6.2.2]Hệ thống sinh ngẫu nhiên khối gạch dự phòng khi vừa bắt đầu game
         if (this.nextPiece == null) {
             this.nextPiece = new Tetromino(rand.nextInt(7));
         }
 
-        // 2. Lấy viên gạch tiếp theo ra làm viên gạch hiện tại đang rơi
+        // [UC-06 - Bước 6.1.1]Hệ thống đẩy khối gạch dự phòng ra làm khối gạch hiện tại
         this.currentPiece = this.nextPiece;
 
-        // 3. Random ra trước viên gạch tiếp theo (dành cho lượt sau)
+        // [UC-06 - Bước 6.1.2]Kích hoạt hàm tạo ngẫu nhiên khối Tetromino mới
         int randomId = rand.nextInt(7);
+        // [UC-06 - 6.1.3] Khối gạch mới được lưu trữ vào biến dữ liệu dự phòng
+
         this.nextPiece = new Tetromino(randomId);
 
-        // Kiểm tra xem vị trí sinh ra có bị đụng gạch cũ không (Game Over)
         if (!board.isValidMove(currentPiece, currentPiece.getX(), currentPiece.getY())) {
             setGameOver();
         }
-
-        // Khi một khối gạch mới hoàn toàn xuất hiện, mở lại quyền sử dụng tính năng Hold
         this.canHold = true;
     }
 
