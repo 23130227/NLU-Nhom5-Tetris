@@ -57,37 +57,59 @@ public class GameModel {
     }
 
     /**
-     * Cập nhật điểm số dựa trên số dòng vừa ăn được.
-     * LUẬT MỚI: Chỉ ăn từ 2 hàng trở lên mới được tính là Combo.
-     *
-     * @param lineCount số lượng dòng vừa bị xóa đi cùng lúc (thường là 1-4)
+     * [UC-01 - Bước 1.1.2] Đặt lại điểm số và combo về trạng thái ban đầu
      */
+    public void resetScore() {
+        this.score = 0;
+        this.comboCount = -1;
+    }
+
+    /**
+     * [UC-01 - Bước 1.1.3] Thiết lập cấp độ chơi về Level 1
+     */
+    public void setLevel(int level) {
+        this.level = level;
+
+        // [UC-01 - Bước 1.1.4] Model tự động gửi thông điệp dọn sạch ma trận lưới sang Board
+        this.board.reset();
+
+        // Dọn dẹp bổ sung tài nguyên gạch cũ
+        this.nextPiece = null;
+        this.holdPiece = null;
+        this.canHold = true;
+    }
+
+    /**
+     * [UC-01 - Bước 1.1.7] Cập nhật trạng thái hoạt động toàn cục của Game
+     */
+    public void setGameState(GameState state) {
+        this.state = state;
+    }
+
     public void updateScore(int lineCount) {
+        // [UC-05 - Bước 5.1.8] Hệ thống tính toán số điểm cơ bản được cộng thêm
         if (lineCount > 0) {
-            // 1. Điểm cơ bản (1 hàng = 100, 2 hàng = 300, 3 hàng = 500, 4 hàng = 800)
             int[] scoreTable = {0, 100, 300, 500, 800};
             int baseScore = scoreTable[lineCount];
-
             int comboBonus = 0;
 
-            // 2. LUẬT MỚI: Chỉ khi ăn từ 2 hàng trở lên mới tăng Combo
+            // [UC-05 - Bước 5.1.5] Hệ thống tiến hành kiểm tra số lượng hàng vừa xóa để cập nhật trạng thái chuỗi Combo
             if (lineCount >= 2) {
-                this.comboCount++; // Tăng chuỗi combo lên
+                // [UC-05 - Bước 5.1.6]Tăng biến đếm chuỗi Combo thêm 1 đơn vị
+                this.comboCount++;
 
+                // [UC-05 - Bước 5.1.9]Hệ thống tính toán số điểm thưởng Combo gia tăng
                 int currentLevel = Math.max(1, this.level);
                 comboBonus = 50 * this.comboCount * currentLevel;
-
-                System.out.println("=> COMBO x" + this.comboCount + " KÍCH HOẠT! Thưởng Combo: +" + comboBonus);
             } else {
-                // Nếu lượt này chỉ ăn 1 hàng đơn lẻ -> Bị đứt chuỗi Combo cũ, đưa về 0
+                // [UC-05 - Bước 5.1.7]Nhận diện chuỗi ăn điểm bị đứt và tự động đặt biến đếm Combo về lại giá trị 0
                 resetCombo();
-                System.out.println("=> Xóa 1 hàng đơn lẻ (Không có thưởng Combo)");
             }
 
-            // 3. Cộng tổng điểm
+            // [UC-05 - Bước 5.1.10] Hệ thống cộng dồn tổng số điểm mới vào tổng điểm hiện tại (Score)
             this.score += (baseScore + comboBonus);
 
-            // 4. Tăng level mỗi khi đạt 1000 điểm
+            // [UC-05 - Bước 5.2.1, 5.2.2] Kiểm tra đạt ngưỡng thăng cấp và tăng cấp độ (Level) lên 1
             this.level = (this.score / 1000) + 1;
         }
     }
@@ -116,59 +138,66 @@ public class GameModel {
     public void spawnNewPiece() {
         Random rand = new Random();
 
-        // 1. Nếu là lần đầu tiên chạy game (nextPiece chưa có gì), random viên đầu tiên
+        // [UC-06 - Bước 6.2.2]Hệ thống sinh ngẫu nhiên khối gạch dự phòng khi vừa bắt đầu game
         if (this.nextPiece == null) {
             this.nextPiece = new Tetromino(rand.nextInt(7));
         }
 
-        // 2. Lấy viên gạch tiếp theo ra làm viên gạch hiện tại đang rơi
+        // [UC-06 - Bước 6.1.1]Hệ thống đẩy khối gạch dự phòng ra làm khối gạch hiện tại
         this.currentPiece = this.nextPiece;
 
-        // 3. Random ra trước viên gạch tiếp theo (dành cho lượt sau)
+        // [UC-06 - Bước 6.1.2]Kích hoạt hàm tạo ngẫu nhiên khối Tetromino mới
         int randomId = rand.nextInt(7);
+        // [UC-06 - 6.1.3] Khối gạch mới được lưu trữ vào biến dữ liệu dự phòng
+
         this.nextPiece = new Tetromino(randomId);
 
-        // Kiểm tra xem vị trí sinh ra có bị đụng gạch cũ không (Game Over)
         if (!board.isValidMove(currentPiece, currentPiece.getX(), currentPiece.getY())) {
             setGameOver();
         }
-
-        // Khi một khối gạch mới hoàn toàn xuất hiện, mở lại quyền sử dụng tính năng Hold
         this.canHold = true;
     }
 
+    // PHẦN MÃ NGUỒN PHÁT TRIỂN TIẾP DO SINH VIÊN: DOÃN TRẦN ĐÌNH KHANG (MSSV: 23130143) THỰC HIỆN
+    // TƯƠNG ỨNG VỚI CÁC BƯỚC MÔ TẢ TRONG UC-04.5: GIỮ GẠCH (HOLD PIECE)
+
     /**
-     * Xử lý tính năng giữ khối gạch hiện tại (Hold).
-     * <p><i>Lưu ý: Hàm này hiện tại đang để trống (placeholder) chờ được implement logic tráo đổi.</i>
+     * Xử lý tính năng giữ khối gạch hiện tại (Hold) và tráo đổi cấu trúc hình học.
+     * Phương thức này thực hiện kiểm tra trạng thái kho lưu trữ và hoán đổi vị trí.
      */
     public void holdCurrentPiece() {
-        /** Nếu lượt này đã đổi gạch rồi thì không cho phép đổi nữa */
+        // [Bước 4.5.3.1 / 4.5.3.2]: Kiểm tra cờ cho phép, nếu lượt này đã đổi gạch rồi thì từ chối lệnh để ngăn spam
         if (!canHold) {
             return;
         }
 
+        // [Bước 4.5.1.2]: Hệ thống kiểm tra kho chứa Hold xem hiện tại đang trống hay đã có gạch
         if (holdPiece == null) {
-            /** Trường hợp 1: Ô Hold đang trống */
+            // [[Luồng cơ bản 4.5.1 - Bước 4.5.1.3]]: Ô Hold đang trống, đưa khối hiện tại (currentPiece) vào kho chứa Hold
             holdPiece = currentPiece;
-            /** Sinh luôn khối gạch tiếp theo để người chơi đá tiếp */
+
+            // [[Luồng cơ bản 4.5.1 - Bước 4.5.1.4 & 4.5.1.5]]: Sinh khối gạch mới để lấp đầy và đẩy viên tiếp theo ra rơi tiếp
             spawnNewPiece();
         } else {
-            /** Trường hợp 2: Đã có gạch trong ô Hold, tiến hành hoán đổi (Swap) */
+            // [[Luồng thay thế 4.5.2 - Bước 4.5.2.2]]: Ô Hold đã có gạch, tiến hành hoán đổi trực tiếp (Swap) giữa current và hold
             Tetromino temp = currentPiece;
             currentPiece = holdPiece;
             holdPiece = temp;
 
-            /** Đặt lại tọa độ xuất phát cho khối gạch vừa lấy từ ô Hold ra ở đỉnh bàn cờ */
-            /** Thường là ở giữa chiều rộng của Board (ví dụ: x = 3 hoặc 4, y = 0) */
+            // [[Luồng thay thế 4.5.2 - Bước 4.5.2.2]]: Thiết lập lại tọa độ xuất phát an toàn cho khối gạch vừa lấy ra ở đỉnh bàn cờ (x=4, y=0)
             currentPiece.setX(4);
             currentPiece.setY(0);
         }
 
-        /** Khóa tính năng Hold lại, chỉ mở ra khi khối gạch này được hạ cánh và sinh khối mới */
+        // [Bước 4.5.1.6 / 4.5.2.3]: Đánh dấu cờ (flag) vô hiệu hóa chức năng Hold trong phần còn lại của lượt rơi này
         canHold = false;
     }
 
-    /** Hàm getter để sau này lớp View (SidePanel) lấy khối gạch ra vẽ lên UI */
+    /**
+     * Hàm getter trả về đối tượng Tetromino đang nằm trong kho lưu trữ.
+     * Phục vụ cho SidePanel gọi dữ liệu ra hiển thị lên giao diện đồ họa.
+     * @return khối gạch đang được cất giữ
+     */
     public Tetromino getHeldPiece() {
         return holdPiece;
     }
@@ -239,79 +268,90 @@ public class GameModel {
     public void setGameOver(){
         this.state = GameState.GAME_OVER;
     }
-
-    /**
-     * Đặt lại toàn bộ dữ liệu game về trạng thái ban đầu để bắt đầu một ván mới.
-     * Xóa bảng, reset điểm/level, đổi trạng thái sang PLAYING và sinh khối gạch đầu tiên.
-     */
-    public void reset() {
-        board.reset();
-        score = 0;
-        level = 1;
-        comboCount = 0; // Thêm dòng này để reset combo khi chơi lại
-        state = GameState.PLAYING;
-        this.nextPiece = null;
-        spawnNewPiece();
-    }
     /**
      * Hàm ghi điểm cao nhất cảu người chơi vào file.
      */
     public void saveCurrentScoreToFile() {
-        java.util.List<Integer> scores = loadScoresFromFile();
-        scores.add(this.score); // Lấy trực tiếp biến score có sẵn của GameModel
+    }
+    public void saveHighscore(String over, int finalScore) {
+        if (over == null || over.trim().isEmpty()) {
+            over = "Player";
+        }
 
-        // Sắp xếp giảm dần (Điểm cao đứng trước)
-        java.util.Collections.sort(scores, java.util.Collections.reverseOrder());
+        java.util.List<String> records = loadScoresFromFile();
+        records.add(over.trim() + ":" + finalScore);
 
-        // Cắt bớt nếu vượt quá top 10 người chơi
-        if (scores.size() > MAX_TOP_PLAYERS) {
-            scores = scores.subList(0, MAX_TOP_PLAYERS);
+        // Sắp xếp danh sách giảm dần theo điểm số
+        java.util.Collections.sort(records, new java.util.Comparator<String>() {
+            @Override
+            public int compare(String o1, String o2) {
+                int score1 = Integer.parseInt(o1.split(":")[1]);
+                int score2 = Integer.parseInt(o2.split(":")[1]);
+                return Integer.compare(score2, score1);
+            }
+        });
+
+        // Cắt bớt nếu vượt quá số lượng tối đa của nhóm (Top 10)
+        if (records.size() > 10) {
+            records = records.subList(0, 10);
+        }
+
+        // Ghi ngược dữ liệu xuống file txt
+        try (java.io.BufferedWriter writer = new java.io.BufferedWriter(new java.io.FileWriter("highscore.txt"))) {
+            for (String record : records) {
+                writer.write(record + "\n");
+            }
+        } catch (java.io.IOException e) {
+            System.err.println("Lỗi khi ghi file Highscore: " + e.getMessage());
         }
     }
 
     // Hàm đọc danh sách điểm từ file txt lên hệ thống
-    public java.util.List<Integer> loadScoresFromFile() {
-        java.util.List<Integer> scores = new java.util.ArrayList<>();
-        java.io.File file = new java.io.File(HIGHSCORE_FILE);
+    public java.util.List<String> loadScoresFromFile() {
+        java.util.List<String> records = new java.util.ArrayList<>();
+        java.io.File file = new java.io.File("highscore.txt");
 
         if (!file.exists()) {
-            return scores;
+            return records;
         }
 
         try (java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.FileReader(file))) {
             String line;
             while ((line = reader.readLine()) != null) {
-                if (!line.trim().isEmpty()) {
-                    scores.add(Integer.parseInt(line.trim()));
+                if (!line.trim().isEmpty() && line.contains(":")) {
+                    records.add(line.trim());
                 }
             }
-        } catch (java.io.IOException | NumberFormatException e) {
+        } catch (java.io.IOException e) {
             System.err.println("Lỗi khi đọc file Highscore: " + e.getMessage());
         }
-        return scores;
+        return records;
     }
-    // NÂNG CẤP TÍNH NĂNG BÓNG GẠCH
+
+    // PHẦN MÃ NGUỒN PHÁT TRIỂN TIẾP - TÍNH NĂNG NÂNG CẤP: DỰ ĐOÁN BÓNG GẠCH MỜ (GHOST PIECE)
     /**
-     * Thuật toán tìm tọa độ Y thấp nhất mà khối gạch hiện tại có thể rơi xuống (vị trí của bóng gạch).
-     * Hàm này duyệt từ vị trí Y hiện tại, tăng dần cho tới khi va chạm.
-     * * @return tọa độ Y sâu nhất hợp lệ dưới đáy bàn cờ
+     * Thuật toán giả lập rơi tự do để tìm tọa độ trục Y sâu nhất dưới đáy bàn cờ.
+     * Hoạt động dựa trên cơ chế vòng lặp dịch chuyển thử cho đến khi va chạm vật cản.
+     * @return tọa độ Y thấp nhất hợp lệ mà khối gạch hiện tại có thể hạ cánh
      */
     public int getGhostY() {
         if (currentPiece == null) {
             return 0;
         }
 
-        // Bắt đầu từ tọa độ Y hiện tại của khối gạch đang rơi
+        // Bước 1: Khởi tạo tọa độ Y giả lập bằng đúng tọa độ Y hiện tại của khối gạch thật đang rơi
         int ghostY = currentPiece.getY();
 
-        // Vòng lặp thử đi xuống: Nếu ô tiếp theo (ghostY + 1) vẫn trống và hợp lệ thì đi xuống tiếp
+        // Bước 2: Chạy vòng lặp giả lập đi xuống. Hỏi Board xem nếu tăng tọa độ Y thêm 1 ô (ghostY + 1) thì có bị kẹt tường/gạch cũ không?
         while (board.isValidMove(currentPiece, currentPiece.getX(), ghostY + 1)) {
+            // Bước 3: Nếu vị trí tiếp theo vẫn trống trải hợp lệ, tiến hành tịnh tiến ghostY xuống sâu hơn
             ghostY++;
         }
 
-        // Trả về tọa độ Y sâu nhất tìm được để lớp View sử dụng để vẽ bóng
+        // Bước 4: Trả về tọa độ Y sâu nhất tìm được để phục vụ cho tầng View thực hiện đổ bóng đồ họa
         return ghostY;
     }
+
     /**
      * Hàm main dùng để test (kiểm thử) hoạt động của GameModel.
      * Chạy độc lập không cần giao diện.
@@ -333,4 +373,19 @@ public class GameModel {
         piece.printCoords();
     }
 
+    /**
+     * [UC-03 - Bước 3.2.2]: Hủy tiến trình ván đấu cũ, dọn sạch lưới và đưa điểm/level về mặc định
+     */
+    public void clearCurrentGameSession() {
+        this.resetScore();
+        this.setLevel(1);
+    }
+
+    /**
+     * [UC-03 - Bước 3.1.3]: Ghi nhận, kiểm tra dữ liệu kỷ lục và lưu Highscore xuống tệp txt
+     */
+    public void checkAndSaveHighScore() {
+        // Tái sử dụng hàm saveHighscore sẵn có của bạn với tên mặc định là "Player"
+        this.saveHighscore("Player", this.score);
+    }
 }

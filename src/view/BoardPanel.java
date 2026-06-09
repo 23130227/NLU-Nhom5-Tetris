@@ -1,6 +1,7 @@
 package view;
 
 import model.GameModel;
+import model.GameState;
 import model.Tetromino;
 
 import javax.swing.*;
@@ -63,10 +64,20 @@ public class BoardPanel extends JPanel {
 
         if (model == null || model.getBoard() == null) return;
 
-        drawGrid(g2);
-        if(model.getBoard().getClearingLines().isEmpty()) {
+        if (model.getState() == GameState.PLAYING || model.getState() == GameState.PAUSED) {
+            drawGrid(g2);
             drawGhostPiece(g2);
             drawCurrentPiece(g2);
+        }
+
+        if (model.getState() == GameState.PAUSED) {
+            g2.setColor(new Color(0, 0, 0, 150)); // Lớp phủ đen mờ
+            g2.fillRect(0, 0, getWidth(), getHeight());
+            g2.setColor(Color.WHITE);
+            g2.setFont(new Font("Segoe UI", Font.BOLD, 28));
+            g2.drawString("GAME PAUSED", 50, 250);
+            g2.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+            g2.drawString("Tùy chọn: P (Resume) | R (Restart) | E (Exit)", 20, 300);
         }
     }
 
@@ -172,7 +183,8 @@ public class BoardPanel extends JPanel {
         }
     }
 
-    // NÂNG CẤP TÍNH NĂNG BÓNG GẠCH
+    // PHẦN MÃ NGUỒN PHÁT TRIỂN TIẾP DO SINH VIÊN: DOÃN TRẦN ĐÌNH KHANG (MSSV: 23130143) THỰC HIỆN
+    // HÀM XỬ LÝ ĐỒ HỌA REPT REPAINT HIỂN THỊ TÍNH NĂNG NÂNG CẤP: DỰ ĐOÁN BÓNG GẠCH MỜ (GHOST PIECE)
     /**
      * Lấy khối gạch đang rơi, giả lập tọa độ xuống đáy bàn cờ và vẽ bóng mờ.
      * @param g2 đối tượng đồ họa Graphics2D
@@ -180,34 +192,34 @@ public class BoardPanel extends JPanel {
     private void drawGhostPiece(Graphics2D g2) {
         Tetromino piece = model.getCurrentPiece();
         if (piece != null) {
-            // 1. Lấy tọa độ Y của đáy bàn cờ đã tính toán từ Commit 4
+            // Bước 1: Gọi sang hàm getGhostY() trong Model để lấy tọa độ Y thấp nhất có thể hạ cánh đã tính toán ở Commit 4
             int ghostY = model.getGhostY();
 
-            // Tọa độ X của khối gạch hiện tại giữ nguyên
+            // Giữ nguyên tọa độ trục X nằm ngang của khối gạch thật đang di chuyển
             int currentX = piece.getX();
 
-            // 2. Tạo màu mờ (Màu gốc của gạch nhưng thêm độ trong suốt alpha = 60)
+            // Bước 2: Thiết lập màu mờ đặc trưng cho bóng gạch (Lấy màu gốc của gạch thật nhưng bổ sung độ trong suốt Alpha = 60)
             Color baseColor = piece.getColor();
             Color ghostColor = new Color(baseColor.getRed(), baseColor.getGreen(), baseColor.getBlue(), 60);
 
-            // 3. Lấy danh sách các ô vuông cấu thành nên khối gạch dựa theo tọa độ giả lập (currentX, ghostY)
-            // Phương thức getCoordinates(x, y) đã được bạn Pháp viết sẵn trong lớp Tetromino
+            // Bước 3: Lấy danh sách toàn bộ các điểm Point cấu thành khối gạch dựa theo tọa độ giả lập (currentX, ghostY) dưới đáy
             java.util.List<Point> points = piece.getCoordinates(currentX, ghostY);
 
+            // Bước 4: Chạy vòng lặp duyệt qua từng điểm Point để tiến hành đổ bóng vuông lên lưới bàn cờ
             for (Point p : points) {
-                // Chỉ vẽ nếu ô nằm trong vùng hiển thị của sân chơi
+                // Bảo vệ hệ thống: Chỉ thực hiện vẽ nếu ô tọa độ nằm hoàn toàn trong phạm vi lưới sân chơi (10x20)
                 if (p.y >= 0 && p.y < 20 && p.x >= 0 && p.x < 10) {
                     int drawX = p.x * PIXELS_SIZE;
                     int drawY = p.y * PIXELS_SIZE;
                     int margin = 2;
 
-                    // Vẽ ô vuông mờ đại diện cho bóng
+                    // Thực hiện vẽ màu chính đổ bóng mờ trong suốt (Alpha 60) cho ô vuông nhỏ
                     g2.setColor(ghostColor);
                     g2.fillRect(drawX + margin, drawY + margin, PIXELS_SIZE - margin * 2, PIXELS_SIZE - margin * 2);
 
-                    // Vẽ viền nét đứt hoặc viền mờ bao quanh để nhìn rõ hình dáng bóng gạch
+                    // Vẽ các nét viền mảnh với độ đậm cao hơn một chút (Alpha 120) bao quanh để người chơi nhìn rõ phom dáng khối gạch dưới đáy
                     g2.setColor(new Color(baseColor.getRed(), baseColor.getGreen(), baseColor.getBlue(), 120));
-                    g2.setStroke(new BasicStroke(1f));
+                    g2.setStroke(new BasicStroke(1f)); // Thiết lập độ dày nét viền bằng 1 pixel
                     g2.drawRect(drawX + 1, drawY + 1, PIXELS_SIZE - 2, PIXELS_SIZE - 2);
                 }
             }

@@ -1,7 +1,7 @@
 package view;
 
 import model.GameModel;
-
+import model.GameState;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
@@ -33,15 +33,12 @@ public class GameGUI {
     /** Tham chiếu đến Model để lấy dữ liệu hiển thị (như điểm số). */
     private GameModel model;
 
-    /** Nút bấm để bắt đầu trò chơi. */
+    // Nút bấm bắt đầu ván chơi
     private JButton startBtn;
 
-    /**
-     * Khởi tạo Giao diện người dùng (GUI) cho game.
-     * Thiết lập các Panel, trang trí chữ, đổ bóng và sắp xếp chúng vào cửa sổ chính.
-     *
-     * @param model dữ liệu game để truyền cho các panel con hiển thị
-     */
+    // Thuộc tính theo dõi hiển thị màn hình lớp phủ Tạm dừng
+    private boolean isPauseMenuVisible = false;
+
     public GameGUI(GameModel model) {
         this.model = model;
         this.mainFrame = new JFrame("Tetris");
@@ -52,7 +49,7 @@ public class GameGUI {
         leftPanel.setBackground(Color.BLACK);
         leftPanel.setLayout(new BorderLayout());
 
-        // Panel phía trên của cột trái, ghi đè hàm paintComponent để vẽ text Custom
+        // Panel phía trên của cột trái vẽ text Custom
         JPanel topPanel = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
@@ -87,10 +84,12 @@ public class GameGUI {
         topPanel.setOpaque(false);
         topPanel.setPreferredSize(new Dimension(260, 300));
 
-        // Khởi tạo nút Bắt đầu
+        // ===================================================================
+        // [KHỞI TẠO NÚT BẤM]: Đảm bảo khởi tạo để giải quyết triệt để NullPointerException
+        // ===================================================================
         startBtn = new JButton("Bắt đầu");
         startBtn.setFocusPainted(false); // Bỏ viền bao quanh chữ khi click
-        startBtn.setFocusable(false);    // Bỏ focus để không ăn phím Space của người chơi khi đang xếp gạch
+        startBtn.setFocusable(false);    // Bỏ focus để không ăn phím của người chơi
         startBtn.setFont(new Font("Segoe UI", Font.BOLD, 16));
         startBtn.setBackground(new Color(70, 70, 70));
         startBtn.setForeground(Color.WHITE);
@@ -105,13 +104,13 @@ public class GameGUI {
         leftPanel.add(topPanel, BorderLayout.NORTH);
         leftPanel.add(bottomPanel, BorderLayout.SOUTH);
 
-        // Khởi tạo bảng chơi ở giữa
+        // Khởi tạo bảng chơi ở giữa và cột thông tin bên phải
         this.boardPanel = new BoardPanel(model);
 
         // TODO: Mở comment dòng này khi class SidePanel được hoàn thiện
         this.sidePanel = new SidePanel(model);
 
-        // Container chính dùng BorderLayout để xếp 3 phần: Title (West) | Board (Center) | Info (East)
+        // Container chính xếp 3 phần: Title (West) | Board (Center) | Info (East)
         JPanel mainContainer = new JPanel(new BorderLayout(30, 0));
         mainContainer.setBackground(Color.BLACK);
         mainContainer.setBorder(new EmptyBorder(40, 40, 40, 40));
@@ -126,35 +125,105 @@ public class GameGUI {
         // Cấu hình Cửa sổ chính
         mainFrame.add(mainContainer);
         mainFrame.getContentPane().setBackground(Color.BLACK);
-        mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); // Thoát chương trình khi đóng cửa sổ
-        mainFrame.setResizable(false);                            // Không cho phép thay đổi kích thước cửa sổ
-        mainFrame.pack();                                         // Tự động điều chỉnh kích thước cho vừa các thành phần bên trong
-        mainFrame.setLocationRelativeTo(null);                    // Hiển thị ở giữa màn hình
-        mainFrame.setVisible(true);                               // Hiển thị cửa sổ
+
+        // [UC-03]: Nhường quyền quyết định đóng/xác nhận thoát cửa sổ hoàn toàn cho Controller
+        mainFrame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+
+        mainFrame.setResizable(false);
+        mainFrame.pack();
+        mainFrame.setLocationRelativeTo(null); // Hiển thị ở giữa màn hình
+        mainFrame.setVisible(true);
     }
 
     /**
-     * Cập nhật lại giao diện đồ họa.
-     * Hàm này thường được gọi từ GameController sau mỗi lần gạch rơi hoặc di chuyển
-     * để vẽ lại trạng thái mới nhất của trò chơi.
+     * [UC-02 - Bước 2.1.4 / 2.4.3]: Kích hoạt hiển thị Menu tạm dừng
      */
+    public void showPauseMenu() {
+        this.isPauseMenuVisible = true;
+        // Thầy cô yêu cầu giao diện vẽ lớp phủ chứa thông tin chữ và 3 lựa chọn
+        refresh();
+    }
+
+    /**
+     * [UC-02 - Bước 2.1.6 / 2.2.2 / 2.3.2]: Gỡ bỏ màn hình lớp phủ tạm dừng
+     */
+    public void hidePauseMenu() {
+        this.isPauseMenuVisible = false;
+        refresh();
+    }
+
+    /**
+     * [UC-02 - Bước 2.3.3]: Hiển thị lại màn hình Menu chính (Main Menu)
+     */
+    public void showMainMenu() {
+        this.isPauseMenuVisible = false;
+        JOptionPane.showMessageDialog(mainFrame, "Đã thoát ván đấu. Trở về màn hình MENU chính!");
+        refresh();
+    }
+
+    /**
+     * [UC-03 - Bước 3.3.2]: Hiện hộp thoại xác nhận thoát khi bấm dấu X đồ họa lúc đang chơi
+     */
+    public boolean showConfirmationDialog(String message) {
+        int choice = JOptionPane.showConfirmDialog(
+                mainFrame,
+                message,
+                "Xác nhận thoát game",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.WARNING_MESSAGE
+        );
+        return choice == JOptionPane.YES_OPTION;
+    }
+
+    public void updateLevelUI(int level) {
+        if (sidePanel != null) {
+            sidePanel.repaint();
+        }
+    }
+
     public void refresh(){
         boardPanel.repaint(); // Yêu cầu BoardPanel vẽ lại
 
         // TODO: Mở comment dòng này khi class SidePanel được hoàn thiện
       sidePanel.repaint();
     }
-
     /**
      * Hiển thị hộp thoại thông báo khi trò chơi kết thúc (Game Over).
-     * Yêu cầu người chơi nhập tên để lưu điểm số.
      */
     public void showGameOver(){
         String over = JOptionPane.showInputDialog(mainFrame, "Game Over!\nScore:" + model.getScore() +
                 "\nEnter your name:", "Game Over", JOptionPane.INFORMATION_MESSAGE);
-    }
 
-    /**
+    // Gọi Model lưu trữ dữ liệu
+    int finalScore = model.getScore();
+        model.saveHighscore(over, finalScore);
+
+    //  Đọc dữ liệu Top 10 và build  hiển thị bảng xếp hạng
+    java.util.List<String> topScores = model.loadScoresFromFile();
+    StringBuilder leaderboard = new StringBuilder();
+        leaderboard.append("🏆 BẢNG XẾP HẠNG TOP 10 ĐIỂM CAO 🏆\n");
+        leaderboard.append("=========================================\n");
+
+        if (topScores.isEmpty()) {
+        leaderboard.append("Chưa có kỷ lục nào.\n");
+    } else {
+        for (int i = 0; i < topScores.size(); i++) {
+            String[] parts = topScores.get(i).split(":");
+            leaderboard.append(" Hạng ").append(i + 1).append(":\t").append(parts[0]).append("\t- ").append(parts[1]).append(" điểm\n");
+        }
+    }
+        leaderboard.append("=========================================\n");
+        leaderboard.append("Nhấn OK để chơi trận mới!");
+
+        JOptionPane.showMessageDialog(mainFrame, leaderboard.toString(), "Bảng Vàng Kỷ Lục", JOptionPane.INFORMATION_MESSAGE);
+
+
+}
+
+
+
+
+/**
      * Lấy tham chiếu đến cửa sổ chính của game.
      *
      * @return cửa sổ {@link JFrame} chính
@@ -171,4 +240,6 @@ public class GameGUI {
     public JButton getStartBtn() {
         return startBtn;
     }
+
+    public boolean isPauseMenuVisible() { return isPauseMenuVisible; }
 }
